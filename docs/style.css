@@ -118,3 +118,17 @@
   #loginForm button{font-size:27px}
   #loginError{position:static;width:100%;font-size:14px;min-height:18px}
 }
+
+/* The new crest heads every document; the selectable round seal belongs by the signature. */
+.paper{position:relative}
+.paper .document-crest{display:none}
+.paper:not([data-kind=custom]) .document-crest{display:block;position:absolute;top:2cqw;left:50%;transform:translateX(-50%);width:9cqw;height:18cqw;object-fit:contain}
+.paper[data-kind=decree] .reference-header{padding-top:20cqw}
+.paper[data-kind=conclusion] .reference-recipient,.paper[data-kind=report] .reference-recipient{width:43%}
+.paper[data-kind=notice] .reference-columns{gap:20%}
+.paper:not([data-kind=custom]) .paperfoot{margin-top:auto!important;min-height:17cqw;align-items:end}
+.paper .stamp,.paper[data-kind=decree] .stamp,.paper[data-kind=conclusion] .stamp,.paper[data-kind=notice] .stamp,.paper[data-kind=report] .stamp{position:static;top:auto;left:auto;transform:none;align-self:end;width:13cqw;height:13cqw;border:0;border-radius:0;overflow:visible;flex:none}
+.paper .stamp[hidden],.paper .stamp img[hidden]{display:none!important}
+.paper .stamp img,.paper[data-kind=decree] .stamp img,.paper[data-kind=conclusion] .stamp img,.paper[data-kind=notice] .stamp img,.paper[data-kind=report] .stamp img{display:block;width:100%;height:100%;object-fit:contain;filter:none;opacity:1}
+.paper[data-kind=custom] .seal-emblem{filter:none;opacity:1}
+@media print{.paper:not([data-kind=custom]) .document-crest{width:19mm;height:38mm;top:5mm}.paper[data-kind=decree] .reference-header{padding-top:40mm}.paper .stamp{width:25mm!important;height:25mm!important}}

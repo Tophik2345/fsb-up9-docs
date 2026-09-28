@@ -2,7 +2,7 @@
 const $ = selector => document.querySelector(selector);
 $('.brand-avatar').src=$('.seal-emblem').src;
 $('#loginCrest').src='up9-crest-transparent.webp';
-const originalStampSrc=$('.stamp img').getAttribute('src');
+const crestSrc='up9-crest-transparent.webp';
 const allowed = new Set(['B','STRONG','I','EM','U','OL','UL','LI','DIV','P','BR']);
 $('#date').value = '2026-09-27';
 function safeHtml(root) {
@@ -25,8 +25,10 @@ function update() {
   const documentCode=val('#code').trim().replace(/^№\s*/,'');
   const kind=template.startsWith('Постановление')?'decree':template.startsWith('Заключение')?'conclusion':template.startsWith('Уведомление')?'notice':template.startsWith('Рапорт')?'report':'custom';
   $('.paper').dataset.kind=kind;
-  const stampEl=$('.stamp img'),stampSrc=kind==='notice'?'up9-crest.jpeg':originalStampSrc;
-  if(stampEl.getAttribute('src')!==stampSrc)stampEl.setAttribute('src',stampSrc);
+  const stampEl=$('.stamp img'),stampChoice=val('#stampChoice');
+  stampEl.hidden=!stampChoice;
+  stampEl.parentElement.hidden=!stampChoice;
+  if(stampChoice)stampEl.src=`up9-stamp-${stampChoice}.webp`;
   const head=$('#referenceHeader');head.replaceChildren();
   const node=(tag,text,parent=head)=>{const el=document.createElement(tag);el.textContent=text;parent.appendChild(el);return el};
   const lines=$('#intro').innerText.split('\n').map(x=>x.trim()).filter(Boolean);
@@ -182,7 +184,7 @@ async function prepareDownload(generation){
     const footerY=Math.max(1640,y+55),height=footerY+160;
     canvas.width=width;canvas.height=height;
     ctx.fillStyle='#e6e6e5';ctx.fillRect(0,0,width,height);
-    ctx.drawImage(emblem,margin,55,76,154);
+    ctx.drawImage(emblem,570,45,100,190);
     line('ФЕДЕРАЛЬНАЯ СЛУЖБА БЕЗОПАСНОСТИ',margin,242,25,true);
     line('Управление № 9 · Россия Онлайн',margin,272,24,true);
     ctx.strokeStyle='#888';ctx.lineWidth=1.5;ctx.strokeRect(890,85,285,105);
@@ -199,7 +201,7 @@ async function prepareDownload(generation){
     if(!$('#decisionCaption').hidden){y+=12;centerCaption($('#decisionCaption').textContent)}
     for(let i=0;i<items.length;i++){wrapped((i+1)+'. '+items[i],margin+22,right-margin-22,25);y+=9}
     ctx.strokeStyle='#aaa';ctx.beginPath();ctx.moveTo(margin,footerY);ctx.lineTo(right,footerY);ctx.stroke();
-    ctx.globalAlpha=.25;ctx.drawImage(emblem,margin,footerY+20,83,126);ctx.globalAlpha=1;
+    if($('#stampChoice').value){const seal=await imageLoaded($('.stamp img').src);ctx.drawImage(seal,margin,footerY+12,125,125)}
     const signature=$('#psignatureImage');
     if(!signature.hidden&&signature.src){const signImg=await imageLoaded(signature.src);ctx.drawImage(signImg,right-300,footerY+15,260,58)}
     else {ctx.textAlign='right';line($('#signatureText').value,right,footerY+78,36,false,'#576584',true);ctx.textAlign='left'}
@@ -222,7 +224,8 @@ async function prepareReferenceDownload(generation){
     const paragraphs=[...$('#pintro').children].map(p=>p.innerText.trim()).filter(Boolean);
     const points=[...$('#ppoints').querySelectorAll('li')].map(li=>li.innerText.trim());
     const loadImage=src=>new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=src});
-    const stampEl=$('.stamp img'),stamp=stampEl?.src?await loadImage(stampEl.src):null;
+    const stampEl=$('.stamp img'),stamp=$('#stampChoice').value?await loadImage(stampEl.src):null;
+    const crest=await loadImage(crestSrc);
     const font=(size=26,bold=false,italic=false)=>`${italic?'italic ':''}${bold?'bold ':''}${size}px "Times New Roman", serif`;
     function write(text,x,y,size=26,bold=false,align='left'){
       ctx.font=font(size,bold);ctx.fillStyle='#111';ctx.textAlign=align;ctx.fillText(text,x,y);ctx.textAlign='left';
@@ -244,14 +247,14 @@ async function prepareReferenceDownload(generation){
       const title=$('#ptype').textContent,subtitle=$('#ptitle').textContent;
       let y,x=kind==='decree'?110:170,width=1240-x*2;
       if(kind==='decree'){
-        write('УПРАВЛЕНИЕ СОБСТВЕННОЙ БЕЗОПАСНОСТИ',center,60,29,true,'center');
-        write('(9 УПРАВЛЕНИЕ ФСБ РО)',center,97,27,true,'center');
-        write('г. Москва, ул. Большая Лубянка, д. 27',center,160,22,false,'center');
-        write('9usb.fsbro@gmail.ru',center,192,22,false,'center');
-        write(title,center,282,34,true,'center');write(subtitle,center,330,27,true,'center');
-        write('г. Москва',x,440,25);
-        if($('#pcode').textContent)write('№ '+$('#pcode').textContent,x,476,23);
-        write($('#referenceDate').children[1].textContent,1240-x,440,25,false,'right');y=520;
+        write('УПРАВЛЕНИЕ СОБСТВЕННОЙ БЕЗОПАСНОСТИ',center,250,29,true,'center');
+        write('(9 УПРАВЛЕНИЕ ФСБ РО)',center,287,27,true,'center');
+        write('г. Москва, ул. Большая Лубянка, д. 27',center,350,22,false,'center');
+        write('9usb.fsbro@gmail.ru',center,382,22,false,'center');
+        write(title,center,472,34,true,'center');write(subtitle,center,520,27,true,'center');
+        write('г. Москва',x,630,25);
+        if($('#pcode').textContent)write('№ '+$('#pcode').textContent,x,666,23);
+        write($('#referenceDate').children[1].textContent,1240-x,630,25,false,'right');y=710;
       }else if(kind==='conclusion'||kind==='report'){
         const recipient=$('#referenceHeader').innerText.trim().split(/\n/);
         let ry=215;for(const line of recipient){ry=wrap(line,670,ry,420,25,0,false)+2}
@@ -279,10 +282,8 @@ async function prepareReferenceDownload(generation){
       }else{
         let py=footerY;for(const part of position.split(',').map(s=>s.trim())){write(part,x,py,25);py+=33}
       }
-      if(stamp&&kind!=='custom'){
-        if(kind==='notice')ctx.drawImage(stamp,574,335,92,185);
-        else ctx.drawImage(stamp,75,110,150,250);
-      }
+      ctx.drawImage(crest,570,25,100,185);
+      if(stamp)ctx.drawImage(stamp,x+8,footerY-48,135,135);
       const drawn=$('#psignatureImage');
       const signatureY=kind==='decree'?footerY-67:footerY-45;
       if(!drawn.hidden&&$('#signaturePad'))ctx.drawImage($('#signaturePad'),780,signatureY,230,60);
