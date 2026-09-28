@@ -270,20 +270,19 @@ async function prepareReferenceDownload(generation){
       points.forEach((point,i)=>{write((i+1)+'.',x+25,y,25);y=wrap(point,x+75,y,width-75,26)+18});
       const footerY=Math.max(kind==='decree'?1490:kind==='report'?1195:kind==='notice'?1330:1400,y+65);
       const position=$('#pposition').textContent;
-      if(kind==='decree'){
+      if(kind==='decree'||kind==='conclusion'){
         let py=footerY+33;for(const part of position.split(',').map(s=>s.trim())){write(part,1240-x,py,25,false,'right');py+=33}
       }else{
         let py=footerY;for(const part of position.split(',').map(s=>s.trim())){write(part,x,py,25);py+=33}
       }
       if(stamp&&(kind==='decree'||kind==='conclusion')){
-        if(kind==='decree')ctx.drawImage(stamp,x+25,footerY-65,100,170);
-        else ctx.drawImage(stamp,x+330,footerY-55,100,170);
+        ctx.drawImage(stamp,75,110,150,250);
       }
       const drawn=$('#psignatureImage');
       const signatureY=kind==='decree'?footerY-67:footerY-45;
       if(!drawn.hidden&&$('#signaturePad'))ctx.drawImage($('#signaturePad'),780,signatureY,230,60);
       else if($('#signatureText').value)write($('#signatureText').value,880,signatureY+45,27,false,'center');
-      write($('#pauthor').textContent,1080,kind==='decree'?footerY+99:footerY+18,25,false,'right');
+      write($('#pauthor').textContent,1080,kind==='decree'||kind==='conclusion'?footerY+99:footerY+18,25,false,'right');
       if(kind==='report')write('Дата: '+$('#pdate').textContent,x,footerY+100,23);
       return footerY+230;
     }
