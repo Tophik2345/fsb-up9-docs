@@ -80,3 +80,4 @@
 .paper[data-kind=decree]{padding-top:3%}
 .paper[data-kind=decree] #pintro p,.paper[data-kind=decree] #ppoints li{font-size:2.25cqw!important}
 .paper[data-kind=decree] .reference-header{margin-bottom:6cqw}
+.paper:not([data-kind=custom]) .reference-date>span:first-child{white-space:pre-line}
