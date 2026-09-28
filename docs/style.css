@@ -92,6 +92,7 @@
 .paper[data-kind=notice] .stamp img,.paper[data-kind=report] .stamp img{width:100%;height:100%;filter:none;opacity:1}
 .paper[data-kind=notice] .sign,.paper[data-kind=report] .sign{margin-left:auto}
 .paper[data-kind=notice] .stamp{left:1cqw;width:14cqw}
+.paper[data-kind=notice] .stamp{top:22cqw;left:50%;width:9cqw;height:18cqw;transform:translateX(-50%)}
 
 /* Login artwork with live form controls aligned over its field and button. */
 #loginGate{min-height:100dvh;background:#081322 url('login-background.jpeg') center/cover no-repeat;overflow:hidden}

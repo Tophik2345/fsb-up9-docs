@@ -2,6 +2,7 @@
 const $ = selector => document.querySelector(selector);
 $('.brand-avatar').src=$('.seal-emblem').src;
 $('#loginCrest').src=$('.seal-emblem').src;
+const originalStampSrc=$('.stamp img').getAttribute('src');
 const allowed = new Set(['B','STRONG','I','EM','U','OL','UL','LI','DIV','P','BR']);
 $('#date').value = '2026-09-27';
 function safeHtml(root) {
@@ -24,6 +25,8 @@ function update() {
   const documentCode=val('#code').trim().replace(/^№\s*/,'');
   const kind=template.startsWith('Постановление')?'decree':template.startsWith('Заключение')?'conclusion':template.startsWith('Уведомление')?'notice':template.startsWith('Рапорт')?'report':'custom';
   $('.paper').dataset.kind=kind;
+  const stampEl=$('.stamp img'),stampSrc=kind==='notice'?'up9-crest.jpeg':originalStampSrc;
+  if(stampEl.getAttribute('src')!==stampSrc)stampEl.setAttribute('src',stampSrc);
   const head=$('#referenceHeader');head.replaceChildren();
   const node=(tag,text,parent=head)=>{const el=document.createElement(tag);el.textContent=text;parent.appendChild(el);return el};
   const lines=$('#intro').innerText.split('\n').map(x=>x.trim()).filter(Boolean);
@@ -277,7 +280,8 @@ async function prepareReferenceDownload(generation){
         let py=footerY;for(const part of position.split(',').map(s=>s.trim())){write(part,x,py,25);py+=33}
       }
       if(stamp&&kind!=='custom'){
-        ctx.drawImage(stamp,kind==='notice'?25:75,110,150,250);
+        if(kind==='notice')ctx.drawImage(stamp,574,335,92,185);
+        else ctx.drawImage(stamp,75,110,150,250);
       }
       const drawn=$('#psignatureImage');
       const signatureY=kind==='decree'?footerY-67:footerY-45;
