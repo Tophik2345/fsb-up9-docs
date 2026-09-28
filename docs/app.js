@@ -246,6 +246,18 @@ async function prepareReferenceDownload(generation){
       }
       return y+size*.55;
     }
+    function drawConclusionSeal(left,top){
+      const cx=left+90,cy=top+90;
+      ctx.save();ctx.strokeStyle='#292929';ctx.lineWidth=2;
+      for(const radius of [87,76]){ctx.beginPath();ctx.arc(cx,cy,radius,0,Math.PI*2);ctx.stroke()}
+      ctx.beginPath();ctx.arc(cx,cy,48,0,Math.PI*2);ctx.stroke();
+      ctx.font=font(11,true);ctx.fillStyle='#222';ctx.textAlign='center';
+      ctx.fillText('ФЕДЕРАЛЬНАЯ СЛУЖБА',cx,cy-59);
+      ctx.font=font(16,true);
+      ctx.fillText('ФСБ РО',cx,cy+68);
+      if(grayStamp){ctx.globalAlpha=.82;ctx.drawImage(grayStamp,cx-25,cy-47,50,94)}
+      ctx.restore();
+    }
     function render(){
       ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
       const title=$('#ptype').textContent,subtitle=$('#ptitle').textContent;
@@ -288,7 +300,7 @@ async function prepareReferenceDownload(generation){
       }
       if(stamp&&(kind==='decree'||kind==='conclusion')){
         if(kind==='decree'){ctx.save();ctx.globalAlpha=.7;ctx.drawImage(grayStamp,x+25,footerY-65,100,170);ctx.restore()}
-        else ctx.drawImage(stamp,x+250,footerY-35,170,170);
+        else drawConclusionSeal(x+330,footerY-55);
       }
       const drawn=$('#psignatureImage');
       const signatureY=kind==='decree'?footerY-67:footerY-45;
