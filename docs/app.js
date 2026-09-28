@@ -20,6 +20,7 @@ function countWords(node) { return (node.innerText.trim().match(/\S+/g) || []).l
 function update() {
   const val = id => $(id).value;
   const template=val('#template');
+  const documentCode=val('#code').trim().replace(/^№\s*/,'');
   const kind=template.startsWith('Постановление')?'decree':template.startsWith('Заключение')?'conclusion':template.startsWith('Уведомление')?'notice':template.startsWith('Рапорт')?'report':'custom';
   $('.paper').dataset.kind=kind;
   const head=$('#referenceHeader');head.replaceChildren();
@@ -34,13 +35,13 @@ function update() {
   }else if(kind==='notice'){
     const columns=node('div','',head);columns.className='reference-columns';
     const noticeDate=val('#date')?new Intl.DateTimeFormat('ru-RU',{day:'2-digit',month:'long',year:'numeric'}).format(new Date(val('#date')+'T12:00:00')).replace(' г.',' год'):'';
-    node('div','ФЕДЕРАЛЬНАЯ\nСЛУЖБА БЕЗОПАСНОСТИ\n(ФСБ РО)\n\nУПРАВЛЕНИЕ «М»\n'+noticeDate+' №'+val('#code'),columns);
+    node('div','ФЕДЕРАЛЬНАЯ\nСЛУЖБА БЕЗОПАСНОСТИ\n(ФСБ РО)\n\nУПРАВЛЕНИЕ «М»\n'+noticeDate+(documentCode?' № '+documentCode:''),columns);
     node('div',lines[0]||'',columns);
   }
   const dates=$('#referenceDate');dates.hidden=kind==='custom'||kind==='notice'||kind==='report';
-  dates.children[0].textContent=kind==='decree'?'г. Москва':val('#date')?new Date(val('#date')+'T12:00:00').toLocaleDateString('ru-RU'):'';
+  dates.children[0].textContent=(kind==='decree'?'г. Москва':val('#date')?new Date(val('#date')+'T12:00:00').toLocaleDateString('ru-RU'):'')+(documentCode?'\n№ '+documentCode:'');
   dates.children[1].textContent=kind==='decree'&&val('#date')?new Intl.DateTimeFormat('ru-RU',{day:'numeric',month:'long',year:'numeric'}).format(new Date(val('#date')+'T12:00:00')).replace(' г.',' года'):'г. Москва';
-  $('#pcode').textContent = val('#code');
+  $('#pcode').textContent = documentCode;
   $('#pdate').textContent = val('#date') ? new Date(val('#date')+'T12:00:00').toLocaleDateString('ru-RU') : '';
   $('#ptype').textContent = ({'Постановление о привлечении к дисциплинарной ответственности':'ПОСТАНОВЛЕНИЕ','Заключение по результатам служебной проверки':'ЗАКЛЮЧЕНИЕ','Уведомление о проведении служебной проверки':'УВЕДОМЛЕНИЕ','Рапорт о нарушении требований внутреннего устава':'РАПОРТ'})[val('#template')] || val('#template').replace(' СК','').toUpperCase();
   $('#ptitle').textContent = val('#title');
@@ -249,13 +250,14 @@ async function prepareReferenceDownload(generation){
         write('9usb.fsbro@gmail.ru',center,192,22,false,'center');
         write(title,center,282,34,true,'center');write(subtitle,center,330,27,true,'center');
         write('г. Москва',x,440,25);
+        if($('#pcode').textContent)write('№ '+$('#pcode').textContent,x,476,23);
         write($('#referenceDate').children[1].textContent,1240-x,440,25,false,'right');y=520;
       }else if(kind==='conclusion'||kind==='report'){
         const recipient=$('#referenceHeader').innerText.trim().split(/\n/);
         let ry=215;for(const line of recipient){ry=wrap(line,670,ry,420,25,0,false)+2}
         write(title,center,kind==='conclusion'?435:445,30,true,'center');
         write(subtitle,center,kind==='conclusion'?476:510,25,false,'center');
-        if(kind==='conclusion'){write($('#pdate').textContent,170,548,25);write('г. Москва',1070,548,25,false,'right');y=615}
+        if(kind==='conclusion'){write($('#pdate').textContent,170,548,25);if($('#pcode').textContent)write('№ '+$('#pcode').textContent,170,580,23);write('г. Москва',1070,548,25,false,'right');y=615}
         else y=640;
       }else{
         const left=$('#referenceHeader .reference-columns>div:first-child').innerText.split(/\n/);
