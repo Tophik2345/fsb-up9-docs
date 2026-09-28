@@ -33,12 +33,13 @@ function update() {
     node('div',lines[kind==='conclusion'?1:0]||'',head).className='reference-recipient';
   }else if(kind==='notice'){
     const columns=node('div','',head);columns.className='reference-columns';
-    node('div','ФЕДЕРАЛЬНАЯ\nСЛУЖБА БЕЗОПАСНОСТИ\n(ФСБ РО)\n\nУПРАВЛЕНИЕ «М»\n'+(val('#date')?new Date(val('#date')+'T12:00:00').toLocaleDateString('ru-RU'):'')+' №'+val('#code'),columns);
+    const noticeDate=val('#date')?new Intl.DateTimeFormat('ru-RU',{day:'2-digit',month:'long',year:'numeric'}).format(new Date(val('#date')+'T12:00:00')).replace(' г.',' год'):'';
+    node('div','ФЕДЕРАЛЬНАЯ\nСЛУЖБА БЕЗОПАСНОСТИ\n(ФСБ РО)\n\nУПРАВЛЕНИЕ «М»\n'+noticeDate+' №'+val('#code'),columns);
     node('div',lines[0]||'',columns);
   }
   const dates=$('#referenceDate');dates.hidden=kind==='custom'||kind==='notice'||kind==='report';
   dates.children[0].textContent=kind==='decree'?'г. Москва':val('#date')?new Date(val('#date')+'T12:00:00').toLocaleDateString('ru-RU'):'';
-  dates.children[1].textContent=kind==='decree'&&val('#date')?new Intl.DateTimeFormat('ru-RU',{day:'numeric',month:'long',year:'numeric'}).format(new Date(val('#date')+'T12:00:00')):'г. Москва';
+  dates.children[1].textContent=kind==='decree'&&val('#date')?new Intl.DateTimeFormat('ru-RU',{day:'numeric',month:'long',year:'numeric'}).format(new Date(val('#date')+'T12:00:00')).replace(' г.',' года'):'г. Москва';
   $('#pcode').textContent = val('#code');
   $('#pdate').textContent = val('#date') ? new Date(val('#date')+'T12:00:00').toLocaleDateString('ru-RU') : '';
   $('#ptype').textContent = ({'Постановление о привлечении к дисциплинарной ответственности':'ПОСТАНОВЛЕНИЕ','Заключение по результатам служебной проверки':'ЗАКЛЮЧЕНИЕ','Уведомление о проведении служебной проверки':'УВЕДОМЛЕНИЕ','Рапорт о нарушении требований внутреннего устава':'РАПОРТ'})[val('#template')] || val('#template').replace(' СК','').toUpperCase();
