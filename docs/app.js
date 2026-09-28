@@ -79,6 +79,13 @@ async function loadTemplates(){
  const response=await api('templates');if(!response.ok)throw new Error('Не удалось загрузить шаблоны');
  const list=await response.json();templates=Object.fromEntries(list.map(t=>[t.name,t]));
  $('#template').replaceChildren(...list.map(t=>new Option(t.name,t.name)));
+ const side=$('#sideTemplates');side.replaceChildren(...list.map((t,index)=>{
+   const button=document.createElement('button');button.type='button';button.className='side-template';
+   const number=document.createElement('span');number.className='side-number';number.textContent=String(index+1).padStart(2,'0');
+   const label=document.createElement('span');label.textContent=t.name;button.append(number,label);
+   button.onclick=()=>{$('#template').value=t.name;$('#template').dispatchEvent(new Event('change'))};
+   return button;
+ }));
  if(list.length)$('#template').dispatchEvent(new Event('change'));
 }
 $('#loginForm').addEventListener('submit',async event=>{
@@ -103,10 +110,11 @@ $('#deleteTemplate').onclick=async()=>{
  if(!response.ok){alert('Не удалось удалить шаблон');return}
  await loadTemplates();
 };
-$('#logout').onclick=async()=>{if(authToken)await api('logout',{method:'POST'});authToken='';currentRole='';templates={};$('.app').hidden=true;$('#loginGate').hidden=false;$('#template').replaceChildren()};
+$('#logout').onclick=async()=>{if(authToken)await api('logout',{method:'POST'});authToken='';currentRole='';templates={};$('.app').hidden=true;$('#loginGate').hidden=false;$('#template').replaceChildren();$('#sideTemplates').replaceChildren()};
 document.querySelectorAll('[contenteditable]').forEach(el=>el.addEventListener('paste',e=>{e.preventDefault();document.execCommand('insertText',false,e.clipboardData.getData('text/plain'))}));
 $('#template').addEventListener('change',()=>{
   const doc=templates[$('#template').value]; if(!doc) return;
+  for(const button of $('#sideTemplates').children)button.classList.toggle('active',button.lastElementChild?.textContent===doc.name);
   for(const key of ['title','code','date','author','position']) $('#'+key).value=doc[key];
   $('#signatureText').value=doc.signature;
   setParagraphs($('#intro'),doc.intro);
