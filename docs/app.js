@@ -276,7 +276,7 @@ async function prepareReferenceDownload(generation){
         let py=footerY;for(const part of position.split(',').map(s=>s.trim())){write(part,x,py,25);py+=33}
       }
       if(stamp&&kind!=='custom'){
-        ctx.drawImage(stamp,75,110,150,250);
+        ctx.drawImage(stamp,kind==='notice'?25:75,110,150,250);
       }
       const drawn=$('#psignatureImage');
       const signatureY=kind==='decree'?footerY-67:footerY-45;
