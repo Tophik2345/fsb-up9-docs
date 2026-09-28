@@ -23,6 +23,9 @@ function update() {
   $('#ptype').textContent = ({'Постановление о привлечении к дисциплинарной ответственности':'ПОСТАНОВЛЕНИЕ','Заключение по результатам служебной проверки':'ЗАКЛЮЧЕНИЕ','Уведомление о проведении служебной проверки':'УВЕДОМЛЕНИЕ','Рапорт о нарушении требований внутреннего устава':'РАПОРТ'})[val('#template')] || val('#template').replace(' СК','').toUpperCase();
   $('#ptitle').textContent = val('#title');
   $('#pintro').innerHTML = safeHtml($('#intro'));
+  for (const paragraph of $('#pintro').children) {
+    paragraph.classList.toggle('doc-caption', /^УСТАНОВИЛ\s*:?\s*$/i.test(paragraph.textContent.trim()));
+  }
   $('#ppoints').innerHTML = safeHtml($('#decision'));
   $('#decisionCaption').textContent = val('#template').startsWith('Заключение') ? 'ВЫВОДЫ:' : 'ПОСТАНОВИЛ:';
   $('#decisionCaption').hidden = !$('#decision').innerText.trim();
@@ -120,14 +123,21 @@ async function prepareDownload(){
       for(let i=0;i<lines.length;i++){line(lines[i],x+(i===0?indent:0),y,size,bold);y+=size*1.44}
       return lines.length;
     }
-    function paragraph(text,bold=false){if(!text.trim())return;wrapped(text,margin,right-margin,25,bold);y+=18}
+    function paragraph(text,bold=false){
+      if(!text.trim())return;
+      if(/^УСТАНОВИЛ\s*:?\s*$/i.test(text.trim())){centerCaption(text);return}
+      wrapped(text,margin,right-margin,25,bold);y+=18
+    }
+    function centerCaption(text){
+      ctx.font=font(25,true);line(text.trim(),(width-ctx.measureText(text.trim()).width)/2,y,25,true);y+=25*1.44+18;
+    }
     function imageLoaded(src){return new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=src})}
     const emblem=await imageLoaded(document.querySelector('.seal-emblem').src);
     const paragraphs=[...$('#pintro').children].map(p=>({text:p.innerText,bold:p.querySelector('b,strong')!==null&&p.innerText.trim()===p.querySelector('b,strong')?.innerText.trim()}));
     // First measure content at the same font and width used for the final image.
     y=735;
     for(const p of paragraphs)paragraph(p.text,p.bold);
-    if(!$('#decisionCaption').hidden){y+=12;paragraph($('#decisionCaption').textContent,true)}
+    if(!$('#decisionCaption').hidden){y+=12;centerCaption($('#decisionCaption').textContent)}
     const items=[...$('#ppoints').querySelectorAll('li')].map(li=>li.innerText);
     for(let i=0;i<items.length;i++){wrapped((i+1)+'. '+items[i],margin+22,right-margin-22,25);y+=9}
     const footerY=Math.max(1640,y+55),height=footerY+160;
@@ -147,7 +157,7 @@ async function prepareDownload(){
     ctx.font=font(29);line($('#ptitle').textContent,(width-ctx.measureText($('#ptitle').textContent).width)/2,555,29);
     y=735;
     for(const p of paragraphs)paragraph(p.text,p.bold);
-    if(!$('#decisionCaption').hidden){y+=12;paragraph($('#decisionCaption').textContent,true)}
+    if(!$('#decisionCaption').hidden){y+=12;centerCaption($('#decisionCaption').textContent)}
     for(let i=0;i<items.length;i++){wrapped((i+1)+'. '+items[i],margin+22,right-margin-22,25);y+=9}
     ctx.strokeStyle='#aaa';ctx.beginPath();ctx.moveTo(margin,footerY);ctx.lineTo(right,footerY);ctx.stroke();
     ctx.globalAlpha=.25;ctx.drawImage(emblem,margin,footerY+20,83,126);ctx.globalAlpha=1;
@@ -170,7 +180,7 @@ function initSignature(){
   function sync(){const img=$('#psignatureImage');img.src=canvas.toDataURL('image/png');img.hidden=!hasInk;$('#psignature').hidden=hasInk}
   canvas.addEventListener('pointerdown',e=>{drawing=true;hasInk=true;canvas.setPointerCapture(e.pointerId);const p=point(e);ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x+.01,p.y+.01);ctx.strokeStyle='#3a4c78';ctx.lineWidth=2.5;ctx.lineCap='round';ctx.stroke();sync()});
   canvas.addEventListener('pointermove',e=>{if(!drawing)return;const p=point(e);ctx.lineTo(p.x,p.y);ctx.stroke();sync()});
-  for(const event of ['pointerup','pointercancel'])canvas.addEventListener(event,()=>drawing=false);
-  $('#clearSignature').onclick=()=>{ctx.clearRect(0,0,canvas.width,canvas.height);hasInk=false;sync()};sync();
+  for(const event of ['pointerup','pointercancel'])canvas.addEventListener(event,()=>{drawing=false;scheduleDownload()});
+  $('#clearSignature').onclick=()=>{ctx.clearRect(0,0,canvas.width,canvas.height);hasInk=false;sync();scheduleDownload()};sync();
 }
 initSignature();
