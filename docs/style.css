@@ -33,4 +33,20 @@
 .paper h1,.paper h3{text-align:center!important}
 .paper #pintro .doc-caption,.paper #decisionCaption{display:block;width:100%;text-align:center!important;font-weight:bold}
 
+/* Document references: each built-in form retains its own page structure. */
+.app{display:block}.main{width:100%}.topbar{gap:16px}.site-identity{display:flex;align-items:center;gap:10px;white-space:nowrap;font-size:13px;letter-spacing:.025em}.brand-avatar{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:#323b50;border:1px solid #858fa8;color:#fff;font-family:Georgia,serif;font-weight:700}.crumb{margin-right:auto}.workspace{max-width:1520px}
+.paper[data-kind]:not([data-kind=custom]){background:#fff;color:#111;box-shadow:0 5px 26px #0004;padding:9% 9% 7%;min-height:141.4cqw;font-family:'Times New Roman',serif}
+.paper:not([data-kind=custom]) .paperhead,.paper:not([data-kind=custom]) .paperdate{display:none}
+.paper .reference-header{display:none}.paper:not([data-kind=custom]) .reference-header{display:block;white-space:pre-line;font-size:2.15cqw;line-height:1.35}
+.reference-agency{text-align:center}.reference-crest{display:block;width:9cqw;height:11cqw;object-fit:contain;filter:grayscale(1);margin:0 auto 3cqw}.reference-agency strong{display:block;font-size:2.35cqw!important;line-height:1.25!important}.reference-agency small{display:block;font-size:1.9cqw;line-height:1.5;margin-top:2cqw}
+.reference-recipient{width:49%;margin-left:auto;text-align:right;min-height:17cqw;white-space:pre-line}
+.reference-columns{display:grid;grid-template-columns:1fr 1fr;gap:8%;min-height:31cqw;text-align:center;align-items:start}.reference-columns>div:last-child{text-align:right}.reference-columns>div:first-child{line-height:1.35}
+.paper:not([data-kind=custom]) h1{text-align:center!important;letter-spacing:normal;font-size:3.25cqw;margin:3cqw 0 1cqw}.paper:not([data-kind=custom]) h3{text-align:center!important;font-size:2.55cqw;font-weight:700;margin:0 0 4cqw}
+.paper:not([data-kind=custom]) .reference-date{display:flex;justify-content:space-between;font-size:2.2cqw;margin:2cqw 0 4cqw}.paper .reference-date[hidden]{display:none!important}
+.paper:not([data-kind=custom]) #pintro{margin:0;white-space:normal}.paper:not([data-kind=custom]) #pintro p{font-size:2.2cqw!important;line-height:1.43;text-align:justify;text-indent:5cqw;margin:0 0 1.3cqw}.paper:not([data-kind=custom]) #pintro .doc-caption{text-align:center!important;text-indent:0;margin:1.5cqw 0 3cqw;font-weight:700!important}
+.paper:not([data-kind=custom]) #decisionCaption{font-size:2.25cqw!important;margin:2.4cqw 0 2.5cqw}.paper:not([data-kind=custom]) #ppoints li{font-size:2.2cqw!important;line-height:1.45;text-align:justify;padding-left:1.2cqw;margin-bottom:2.2cqw}
+.paper:not([data-kind=custom]) .paperfoot{border:0;margin-top:6cqw;padding-top:0;min-height:0}.paper:not([data-kind=custom]) .stamp{border:0}.paper:not([data-kind=custom]) .sign{font-size:2.15cqw;text-align:right}
+.paper[data-kind=decree] .reference-header{min-height:30cqw}.paper[data-kind=conclusion] h3{font-weight:400}.paper[data-kind=notice] h1{margin-top:1cqw}.paper[data-kind=report] h1{margin-top:1cqw}.paper[data-kind=report] h3{font-weight:400;margin:3cqw 0 8cqw}
+@media print{.paper:not([data-kind=custom]){width:210mm;height:297mm;min-height:0;padding:23mm 20mm}.paper:not([data-kind=custom]) #pintro p,.paper:not([data-kind=custom]) #ppoints li,.paper:not([data-kind=custom]) .reference-header,.paper:not([data-kind=custom]) .reference-date,.paper:not([data-kind=custom]) #decisionCaption{font-size:11pt!important}.paper:not([data-kind=custom]) h1{font-size:14pt}.paper:not([data-kind=custom]) h3{font-size:11pt}}
+
 .app[hidden]{display:none!important}#loginGate{min-height:100vh;display:grid;place-items:center;background:#151518}#loginGate[hidden]{display:none}#loginForm{width:min(90vw,380px);padding:30px;background:#1e1e22;border:1px solid #333;border-radius:8px}#loginForm h1{font-size:22px}#loginForm input{width:100%;margin-bottom:16px}#loginForm button{width:100%}#loginError{color:#f6a0a0;min-height:20px}
