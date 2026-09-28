@@ -73,8 +73,8 @@
 .paper[data-kind=decree] h1{font-size:3.6cqw;margin-top:0}
 .paper[data-kind=decree] .reference-date{margin-top:7cqw;margin-bottom:5cqw}
 .paper[data-kind=decree] .paperfoot{margin-top:auto!important;min-height:17cqw;align-items:end}
-.paper[data-kind=decree] .stamp{width:11cqw;height:14cqw;align-self:end}
-.paper[data-kind=decree] .stamp img{width:100%;height:100%;filter:grayscale(1);opacity:.38}
+.paper[data-kind=decree] .stamp{width:11cqw;height:18cqw;align-self:end}
+.paper[data-kind=decree] .stamp img{width:100%;height:100%;filter:grayscale(1);opacity:.7}
 .paper[data-kind=decree] .sign{max-width:62%;line-height:1.2}
 .paper[data-kind=decree] .sign em,.paper[data-kind=decree] #psignatureImage{margin-bottom:2cqw}
 .paper[data-kind=decree]{padding-top:3%}
