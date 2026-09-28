@@ -61,3 +61,7 @@
 @media(max-width:1220px){.app{grid-template-columns:205px minmax(0,1fr)}.workspace{grid-template-columns:minmax(0,1fr);max-width:780px;margin:auto}.template-side{padding:20px 10px}.side-template{font-size:12px}.preview-wrap{max-width:none;width:100%}}
 @media(max-width:700px){.app{display:block}.template-side{position:static;min-height:0;padding:12px 14px;border-right:0;border-bottom:1px solid #34343a}.side-title,.side-subtitle,.side-divider,.side-section,.side-footer{display:none}.side-templates{display:flex;overflow-x:auto;gap:8px}.side-template{flex:0 0 190px;font-size:12px;min-height:62px}.topbar{padding:12px 14px}.crumb{display:none}.workspace{padding:15px;gap:18px}.editor .three,.editor .two{grid-template-columns:1fr}}
 @media print{.template-side{display:none!important}.app{display:block}.workspace{display:block}}
+
+/* Show the full shield in the site header. */
+.brand-avatar{width:44px;height:62px;flex:none;border:0;border-radius:0;background:transparent;padding:0;object-fit:contain}
+@media(max-width:700px){.brand-avatar{width:35px;height:50px}}
