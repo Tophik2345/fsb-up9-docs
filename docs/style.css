@@ -92,3 +92,26 @@
 .paper[data-kind=notice] .stamp img,.paper[data-kind=report] .stamp img{width:100%;height:100%;filter:none;opacity:1}
 .paper[data-kind=notice] .sign,.paper[data-kind=report] .sign{margin-left:auto}
 .paper[data-kind=notice] .stamp{left:1cqw;width:14cqw}
+
+/* Login artwork with live form controls aligned over its field and button. */
+#loginGate{min-height:100dvh;background:#081322 url('login-background.jpeg') center/cover no-repeat;overflow:hidden}
+#loginForm{position:relative;width:max(36.13vw,64.24vh);aspect-ratio:555/735;padding:0;transform:translateY(-1.1vh);background:transparent;border:0;border-radius:0;box-shadow:none}
+#loginForm h1,#loginForm p:not(#loginError),#loginForm label{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+#loginCrest{display:none}
+#loginForm input{position:absolute;left:7.2%;top:73.47%;width:85.6%;height:9.25%;min-height:0;margin:0;padding:0 6%;border:1px solid #91aaca;border-radius:8px;background:#101b2b;color:#f3f4f7;font-size:clamp(14px,1.25vw,21px);outline:none}
+#loginForm input::placeholder{color:#969ba6;opacity:1}
+#loginForm input:focus{border-color:#e8c988;box-shadow:0 0 0 2px #e8c98855}
+#loginForm button{position:absolute;left:7.2%;top:85.03%;width:85.6%;height:9.25%;padding:0;border:2px solid #e7c17a;border-radius:4px;background:linear-gradient(170deg,#e7bb70 0%,#f7dfab 33%,#b47c36 75%,#704922 100%);box-shadow:inset 0 1px 2px #fff8,0 2px 12px #b8844c70;color:#140f0a;font:bold clamp(22px,2.2vw,36px) Georgia,'Times New Roman',serif}
+#loginForm button:hover{filter:brightness(1.1)}
+#loginForm button:disabled{cursor:wait;opacity:.65}
+#loginError{position:absolute;left:7%;top:95%;width:86%;min-height:0;margin:0;text-align:center;color:#ffe5e5;font-size:clamp(12px,1vw,16px);text-shadow:0 1px 3px #000}
+@media(max-width:700px),(max-aspect-ratio:4/5){
+  #loginGate{padding:20px;background:radial-gradient(circle at 50% 0%,#304761 0,#0d1c30 42%,#050b14 100%);overflow:auto}
+  #loginForm{width:min(100%,420px);height:auto;aspect-ratio:auto;transform:none;padding:24px;display:flex;flex-direction:column;align-items:center;gap:16px;border:1px solid #c99b59;border-radius:12px;background:linear-gradient(160deg,#15243a,#07111f);box-shadow:0 20px 50px #0009}
+  #loginCrest{display:block;width:115px;height:180px;object-fit:contain}
+  #loginForm h1{position:static;width:auto;height:auto;margin:0;overflow:visible;clip:auto;white-space:normal;color:#e8c78b;text-align:center;font:bold 28px Georgia,'Times New Roman',serif}
+  #loginForm input,#loginForm button{position:static;width:100%;height:54px;flex:none}
+  #loginForm input{padding:0 18px;font-size:16px}
+  #loginForm button{font-size:27px}
+  #loginError{position:static;width:100%;font-size:14px;min-height:18px}
+}

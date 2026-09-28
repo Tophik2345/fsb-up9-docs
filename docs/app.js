@@ -1,6 +1,7 @@
 
 const $ = selector => document.querySelector(selector);
 $('.brand-avatar').src=$('.seal-emblem').src;
+$('#loginCrest').src=$('.seal-emblem').src;
 const allowed = new Set(['B','STRONG','I','EM','U','OL','UL','LI','DIV','P','BR']);
 $('#date').value = '2026-09-27';
 function safeHtml(root) {
