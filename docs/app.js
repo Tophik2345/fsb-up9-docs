@@ -219,17 +219,6 @@ async function prepareReferenceDownload(generation){
     const points=[...$('#ppoints').querySelectorAll('li')].map(li=>li.innerText.trim());
     const loadImage=src=>new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=src});
     const stampEl=$('.stamp img'),stamp=stampEl?.src?await loadImage(stampEl.src):null;
-    let grayStamp=null;
-    if(stamp){
-      grayStamp=document.createElement('canvas');grayStamp.width=stamp.naturalWidth;grayStamp.height=stamp.naturalHeight;
-      const grayCtx=grayStamp.getContext('2d');grayCtx.drawImage(stamp,0,0);
-      const pixels=grayCtx.getImageData(0,0,grayStamp.width,grayStamp.height);
-      for(let i=0;i<pixels.data.length;i+=4){
-        const tone=Math.round(.2126*pixels.data[i]+.7152*pixels.data[i+1]+.0722*pixels.data[i+2]);
-        pixels.data[i]=tone;pixels.data[i+1]=tone;pixels.data[i+2]=tone;
-      }
-      grayCtx.putImageData(pixels,0,0);
-    }
     const font=(size=26,bold=false,italic=false)=>`${italic?'italic ':''}${bold?'bold ':''}${size}px "Times New Roman", serif`;
     function write(text,x,y,size=26,bold=false,align='left'){
       ctx.font=font(size,bold);ctx.fillStyle='#111';ctx.textAlign=align;ctx.fillText(text,x,y);ctx.textAlign='left';
@@ -245,18 +234,6 @@ async function prepareReferenceDownload(generation){
         y+=size*1.43;
       }
       return y+size*.55;
-    }
-    function drawConclusionSeal(left,top){
-      const cx=left+90,cy=top+90;
-      ctx.save();ctx.strokeStyle='#292929';ctx.lineWidth=2;
-      for(const radius of [87,76]){ctx.beginPath();ctx.arc(cx,cy,radius,0,Math.PI*2);ctx.stroke()}
-      ctx.beginPath();ctx.arc(cx,cy,48,0,Math.PI*2);ctx.stroke();
-      ctx.font=font(11,true);ctx.fillStyle='#222';ctx.textAlign='center';
-      ctx.fillText('ФЕДЕРАЛЬНАЯ СЛУЖБА',cx,cy-59);
-      ctx.font=font(16,true);
-      ctx.fillText('ФСБ РО',cx,cy+68);
-      if(grayStamp){ctx.globalAlpha=.82;ctx.drawImage(grayStamp,cx-25,cy-47,50,94)}
-      ctx.restore();
     }
     function render(){
       ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
@@ -299,8 +276,8 @@ async function prepareReferenceDownload(generation){
         let py=footerY;for(const part of position.split(',').map(s=>s.trim())){write(part,x,py,25);py+=33}
       }
       if(stamp&&(kind==='decree'||kind==='conclusion')){
-        if(kind==='decree'){ctx.save();ctx.globalAlpha=.7;ctx.drawImage(grayStamp,x+25,footerY-65,100,170);ctx.restore()}
-        else drawConclusionSeal(x+330,footerY-55);
+        if(kind==='decree')ctx.drawImage(stamp,x+25,footerY-65,100,170);
+        else ctx.drawImage(stamp,x+330,footerY-55,100,170);
       }
       const drawn=$('#psignatureImage');
       const signatureY=kind==='decree'?footerY-67:footerY-45;
