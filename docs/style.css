@@ -34,7 +34,7 @@
 .paper #pintro .doc-caption,.paper #decisionCaption{display:block;width:100%;text-align:center!important;font-weight:bold}
 
 /* Document references: each built-in form retains its own page structure. */
-.app{display:block}.main{width:100%}.topbar{gap:16px}.site-identity{display:flex;align-items:center;gap:10px;white-space:nowrap;font-size:13px;letter-spacing:.025em}.brand-avatar{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:#323b50;border:1px solid #858fa8;color:#fff;font-family:Georgia,serif;font-weight:700}.crumb{margin-right:auto}.workspace{max-width:1520px}
+.app{display:block}.main{width:100%}.topbar{gap:16px}.site-identity{display:flex;align-items:center;gap:10px;white-space:nowrap;font-size:13px;letter-spacing:.025em}.brand-avatar{display:block;width:34px;height:34px;object-fit:contain;border-radius:50%;background:#e7e7e7;border:1px solid #858fa8;padding:2px}.crumb{margin-right:auto}.workspace{max-width:1520px}
 .paper[data-kind]:not([data-kind=custom]){background:#fff;color:#111;box-shadow:0 5px 26px #0004;padding:9% 9% 7%;min-height:141.4cqw;font-family:'Times New Roman',serif}
 .paper:not([data-kind=custom]) .paperhead,.paper:not([data-kind=custom]) .paperdate{display:none}
 .paper .reference-header{display:none}.paper:not([data-kind=custom]) .reference-header{display:block;white-space:pre-line;font-size:2.15cqw;line-height:1.35}
