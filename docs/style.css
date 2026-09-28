@@ -31,5 +31,6 @@
 #addTemplate[hidden],#deleteTemplate[hidden]{display:none!important}#roleBadge{color:#aaa;font-size:12px;align-self:center}.actions{align-items:center;flex-wrap:wrap}@media(max-width:850px){.topbar{height:auto;padding:10px}.crumb{max-width:100%}}
 
 .paper h1,.paper h3{text-align:center!important}
+.paper #pintro .doc-caption,.paper #decisionCaption{display:block;width:100%;text-align:center!important;font-weight:bold}
 
 .app[hidden]{display:none!important}#loginGate{min-height:100vh;display:grid;place-items:center;background:#151518}#loginGate[hidden]{display:none}#loginForm{width:min(90vw,380px);padding:30px;background:#1e1e22;border:1px solid #333;border-radius:8px}#loginForm h1{font-size:22px}#loginForm input{width:100%;margin-bottom:16px}#loginForm button{width:100%}#loginError{color:#f6a0a0;min-height:20px}
