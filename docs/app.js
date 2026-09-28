@@ -40,13 +40,12 @@ function update() {
     node('div',lines[kind==='conclusion'?1:0]||'',head).className='reference-recipient';
   }else if(kind==='notice'){
     const columns=node('div','',head);columns.className='reference-columns';
-    const noticeDate=val('#date')?new Intl.DateTimeFormat('ru-RU',{day:'2-digit',month:'long',year:'numeric'}).format(new Date(val('#date')+'T12:00:00')).replace(' г.',' год'):'';
-    node('div','ФЕДЕРАЛЬНАЯ\nСЛУЖБА БЕЗОПАСНОСТИ\n(ФСБ РО)\n\nУПРАВЛЕНИЕ «М»\n'+noticeDate+(documentCode?' № '+documentCode:''),columns);
+    node('div','ФЕДЕРАЛЬНАЯ\nСЛУЖБА БЕЗОПАСНОСТИ\n(ФСБ РО)\n\nУПРАВЛЕНИЕ «М»'+(documentCode?'\n№ '+documentCode:''),columns);
     node('div',lines[0]||'',columns);
   }
   const dates=$('#referenceDate');dates.hidden=kind==='custom'||kind==='notice'||kind==='report';
-  dates.children[0].textContent=(kind==='decree'?'г. Москва':val('#date')?new Date(val('#date')+'T12:00:00').toLocaleDateString('ru-RU'):'')+(documentCode?'\n№ '+documentCode:'');
-  dates.children[1].textContent=kind==='decree'&&val('#date')?new Intl.DateTimeFormat('ru-RU',{day:'numeric',month:'long',year:'numeric'}).format(new Date(val('#date')+'T12:00:00')).replace(' г.',' года'):'г. Москва';
+  dates.children[0].textContent=(kind==='decree'?'г. Москва':'')+(documentCode?'\n№ '+documentCode:'');
+  dates.children[1].textContent=kind==='decree'?'':'г. Москва';
   $('#pcode').textContent = documentCode;
   $('#pdate').textContent = val('#date') ? new Date(val('#date')+'T12:00:00').toLocaleDateString('ru-RU') : '';
   $('#ptype').textContent = ({'Постановление о привлечении к дисциплинарной ответственности':'ПОСТАНОВЛЕНИЕ','Заключение по результатам служебной проверки':'ЗАКЛЮЧЕНИЕ','Уведомление о проведении служебной проверки':'УВЕДОМЛЕНИЕ','Рапорт о нарушении требований внутреннего устава':'РАПОРТ'})[val('#template')] || val('#template').replace(' СК','').toUpperCase();
@@ -62,8 +61,9 @@ function update() {
   $('#decisionCaption').hidden = kind!=='decree'||!$('#decision').innerText.trim();
   $('#decisionEditorLabel').textContent = val('#template').startsWith('Заключение') ? 'Выводы' : 'Постановил';
   $('#decisionEditorLabel').hidden = !$('#decision').innerText.trim();
-  $('#pauthor').textContent = val('#author');
+  $('#pauthor').textContent = val('#signerName').trim()||val('#author');
   $('#pposition').textContent = val('#position');
+  $('#pfooterdate').textContent = $('#pdate').textContent;
   $('#psignature').textContent = val('#signatureText');
   $('#breadcrumb').textContent = val('#title');
   $('#introCount').textContent = countWords($('#intro')) + ' слов';
@@ -129,6 +129,7 @@ $('#template').addEventListener('change',()=>{
   const doc=templates[$('#template').value]; if(!doc) return;
   for(const button of $('#sideTemplates').children)button.classList.toggle('active',button.lastElementChild?.textContent===doc.name);
   for(const key of ['title','code','date','author','position']) $('#'+key).value=doc[key];
+  $('#signerName').value='';
   $('#signatureText').value=doc.signature;
   setParagraphs($('#intro'),doc.intro);
   setPoints($('#decision'),doc.decision);
@@ -181,17 +182,17 @@ async function prepareDownload(generation){
     if(!$('#decisionCaption').hidden){y+=12;centerCaption($('#decisionCaption').textContent)}
     const items=[...$('#ppoints').querySelectorAll('li')].map(li=>li.innerText);
     for(let i=0;i<items.length;i++){wrapped((i+1)+'. '+items[i],margin+22,right-margin-22,25);y+=9}
-    const footerY=Math.max(1640,y+55),height=footerY+160;
+    const footerY=Math.max(1640,y+55),height=footerY+240;
     canvas.width=width;canvas.height=height;
     ctx.fillStyle='#e6e6e5';ctx.fillRect(0,0,width,height);
-    ctx.drawImage(emblem,570,45,100,190);
+    ctx.drawImage(emblem,555,30,130,245);
     line('ФЕДЕРАЛЬНАЯ СЛУЖБА БЕЗОПАСНОСТИ',margin,242,25,true);
     line('Управление № 9 · Россия Онлайн',margin,272,24,true);
     ctx.strokeStyle='#888';ctx.lineWidth=1.5;ctx.strokeRect(890,85,285,105);
     line('ДЛЯ СВЕДЕНИЯ',908,119,20);line($('#ptype').textContent,908,145,20);line('Экз. № 1',908,171,20);
     ctx.beginPath();ctx.moveTo(margin,312);ctx.lineTo(right,312);ctx.moveTo(margin,420);ctx.lineTo(right,420);ctx.stroke();
-    line('№ '+$('#pcode').textContent,margin,353,21);line('дата '+$('#pdate').textContent,margin,384,21);
-    line('подпись ФСБ',right-140,353,20);line('место г. Москва',right-164,384,20);
+    line('№ '+$('#pcode').textContent,margin,353,21);
+    line('место г. Москва',right-164,384,20);
     const docType=$('#ptype').textContent;const spacing=10;
     ctx.font=font(52,true);const titleWidth=[...docType].reduce((sum,char)=>sum+ctx.measureText(char).width+spacing,0)-spacing;let x=(width-titleWidth)/2;
     for(const char of docType){line(char,x,500,52,true);x+=ctx.measureText(char).width+spacing}
@@ -201,11 +202,12 @@ async function prepareDownload(generation){
     if(!$('#decisionCaption').hidden){y+=12;centerCaption($('#decisionCaption').textContent)}
     for(let i=0;i<items.length;i++){wrapped((i+1)+'. '+items[i],margin+22,right-margin-22,25);y+=9}
     ctx.strokeStyle='#aaa';ctx.beginPath();ctx.moveTo(margin,footerY);ctx.lineTo(right,footerY);ctx.stroke();
-    if($('#stampChoice').value){const seal=await imageLoaded($('.stamp img').src);ctx.drawImage(seal,margin,footerY+12,125,125)}
+    line($('#pposition').textContent,margin,footerY+38,21);
+    if($('#stampChoice').value){const seal=await imageLoaded($('.stamp img').src);ctx.drawImage(seal,margin,footerY+65,125,125)}
+    ctx.textAlign='right';line('Дата: '+$('#pdate').textContent,right,footerY+38,21);line($('#pauthor').textContent,right,footerY+75,23,true);ctx.textAlign='left';
     const signature=$('#psignatureImage');
-    if(!signature.hidden&&signature.src){const signImg=await imageLoaded(signature.src);ctx.drawImage(signImg,right-300,footerY+15,260,58)}
-    else {ctx.textAlign='right';line($('#signatureText').value,right,footerY+78,36,false,'#576584',true);ctx.textAlign='left'}
-    ctx.textAlign='right';line($('#pposition').textContent,right,footerY+113,20);line($('#pauthor').textContent,right,footerY+139,21,true);ctx.textAlign='left';
+    if(!signature.hidden&&signature.src){const signImg=await imageLoaded(signature.src);ctx.drawImage(signImg,right-300,footerY+95,260,75)}
+    else {ctx.textAlign='right';line($('#signatureText').value,right,footerY+143,36,false,'#576584',true);ctx.textAlign='left'}
     const png=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
     if(!png)throw new Error('PNG не создан');
     if(generation!==downloadGeneration)return;
@@ -247,20 +249,20 @@ async function prepareReferenceDownload(generation){
       const title=$('#ptype').textContent,subtitle=$('#ptitle').textContent;
       let y,x=kind==='decree'?110:170,width=1240-x*2;
       if(kind==='decree'){
-        write('УПРАВЛЕНИЕ СОБСТВЕННОЙ БЕЗОПАСНОСТИ',center,250,29,true,'center');
-        write('(9 УПРАВЛЕНИЕ ФСБ РО)',center,287,27,true,'center');
-        write('г. Москва, ул. Большая Лубянка, д. 27',center,350,22,false,'center');
-        write('9usb.fsbro@gmail.ru',center,382,22,false,'center');
-        write(title,center,472,34,true,'center');write(subtitle,center,520,27,true,'center');
-        write('г. Москва',x,630,25);
-        if($('#pcode').textContent)write('№ '+$('#pcode').textContent,x,666,23);
-        write($('#referenceDate').children[1].textContent,1240-x,630,25,false,'right');y=710;
+        write('УПРАВЛЕНИЕ СОБСТВЕННОЙ БЕЗОПАСНОСТИ',center,330,29,true,'center');
+        write('(9 УПРАВЛЕНИЕ ФСБ РО)',center,367,27,true,'center');
+        write('г. Москва, ул. Большая Лубянка, д. 27',center,430,22,false,'center');
+        write('9usb.fsbro@gmail.ru',center,462,22,false,'center');
+        write(title,center,552,34,true,'center');write(subtitle,center,600,27,true,'center');
+        write('г. Москва',x,710,25);
+        if($('#pcode').textContent)write('№ '+$('#pcode').textContent,x,746,23);
+        y=790;
       }else if(kind==='conclusion'||kind==='report'){
         const recipient=$('#referenceHeader').innerText.trim().split(/\n/);
-        let ry=215;for(const line of recipient){ry=wrap(line,670,ry,420,25,0,false)+2}
+        let ry=215;for(const line of recipient){ry=wrap(line,700,ry,390,25,0,false)+2}
         write(title,center,kind==='conclusion'?435:445,30,true,'center');
         write(subtitle,center,kind==='conclusion'?476:510,25,false,'center');
-        if(kind==='conclusion'){write($('#pdate').textContent,170,548,25);if($('#pcode').textContent)write('№ '+$('#pcode').textContent,170,580,23);write('г. Москва',1070,548,25,false,'right');y=615}
+        if(kind==='conclusion'){if($('#pcode').textContent)write('№ '+$('#pcode').textContent,170,580,23);write('г. Москва',1070,548,25,false,'right');y=615}
         else y=640;
       }else{
         const left=$('#referenceHeader .reference-columns>div:first-child').innerText.split(/\n/);
@@ -277,19 +279,14 @@ async function prepareReferenceDownload(generation){
       points.forEach((point,i)=>{write((i+1)+'.',x+25,y,25);y=wrap(point,x+75,y,width-75,26)+18});
       const footerY=Math.max(kind==='decree'?1490:kind==='report'?1195:kind==='notice'?1330:1400,y+65);
       const position=$('#pposition').textContent;
-      if(kind!=='custom'){
-        let py=footerY+33;for(const part of position.split(',').map(s=>s.trim())){write(part,1240-x,py,25,false,'right');py+=33}
-      }else{
-        let py=footerY;for(const part of position.split(',').map(s=>s.trim())){write(part,x,py,25);py+=33}
-      }
-      ctx.drawImage(crest,570,25,100,185);
-      if(stamp)ctx.drawImage(stamp,x+8,footerY-48,135,135);
+      let py=footerY+15;for(const part of position.split(',').map(s=>s.trim())){write(part,x,py,25);py+=33}
+      ctx.drawImage(crest,555,25,130,245);
+      if(stamp)ctx.drawImage(stamp,x+8,footerY+70,135,135);
       const drawn=$('#psignatureImage');
-      const signatureY=kind==='decree'?footerY-67:footerY-45;
-      if(!drawn.hidden&&$('#signaturePad'))ctx.drawImage($('#signaturePad'),780,signatureY,230,60);
-      else if($('#signatureText').value)write($('#signatureText').value,880,signatureY+45,27,false,'center');
-      write($('#pauthor').textContent,1080,kind!=='custom'?footerY+99:footerY+18,25,false,'right');
-      if(kind==='report')write('Дата: '+$('#pdate').textContent,1240-x,footerY+140,23,false,'right');
+      write('Дата: '+$('#pdate').textContent,1240-x,footerY+20,23,false,'right');
+      write($('#pauthor').textContent,1240-x,footerY+58,25,true,'right');
+      if(!drawn.hidden&&$('#signaturePad'))ctx.drawImage($('#signaturePad'),780,footerY+82,230,70);
+      else if($('#signatureText').value)write($('#signatureText').value,880,footerY+130,27,false,'center');
       return footerY+230;
     }
     let bottom=render(),needed=Math.max(1754,Math.ceil(bottom));

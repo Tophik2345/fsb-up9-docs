@@ -132,3 +132,18 @@
 .paper .stamp img,.paper[data-kind=decree] .stamp img,.paper[data-kind=conclusion] .stamp img,.paper[data-kind=notice] .stamp img,.paper[data-kind=report] .stamp img{display:block;width:100%;height:100%;object-fit:contain;filter:none;opacity:1}
 .paper[data-kind=custom] .seal-emblem{filter:none;opacity:1}
 @media print{.paper:not([data-kind=custom]) .document-crest{width:19mm;height:38mm;top:5mm}.paper[data-kind=decree] .reference-header{padding-top:40mm}.paper .stamp{width:25mm!important;height:25mm!important}}
+
+/* Footer order follows the supplied report: date and name, with signature below. */
+.paper:not([data-kind=custom]) .document-crest{width:13cqw;height:24cqw}
+.paper[data-kind=decree] .reference-header{padding-top:27cqw}
+.paper[data-kind=conclusion] .reference-recipient,.paper[data-kind=report] .reference-recipient{width:40%}
+.paper .paperfoot,.paper:not([data-kind=custom]) .paperfoot{min-height:23cqw;align-items:flex-start;margin-top:auto!important;padding-top:3cqw}
+.paper .footer-left{display:flex;flex-direction:column;align-items:flex-start;gap:2cqw;max-width:48%;font-size:2.1cqw;line-height:1.3}
+.paper .footer-left #pposition{white-space:pre-line}
+.paper .sign,.paper[data-kind=decree] .sign{display:flex;flex-direction:column;align-items:flex-end;gap:1.1cqw;max-width:48%;margin-left:auto;text-align:right;line-height:1.25}
+.paper .sign .footer-date,.paper .sign #pauthor{display:block;font-size:2.1cqw}
+.paper .sign em,.paper[data-kind=decree] .sign em{margin:1.4cqw 0 0}
+.paper .sign #psignatureImage,.paper[data-kind=decree] .sign #psignatureImage{max-width:26cqw;height:8cqw;margin:1.4cqw 0 0;object-position:right center}
+.paper[data-kind=custom] .paperhead{padding-top:27cqw}
+.paper[data-kind=custom] .seal-emblem{position:absolute;left:50%;top:2cqw;transform:translateX(-50%);width:13cqw;height:24cqw}
+@media print{.paper:not([data-kind=custom]) .document-crest{width:28mm;height:52mm;top:5mm}.paper[data-kind=decree] .reference-header{padding-top:55mm}.paper[data-kind=custom] .seal-emblem{width:28mm;height:52mm;top:5mm}.paper[data-kind=custom] .paperhead{padding-top:55mm}.paper .footer-left,.paper .sign .footer-date,.paper .sign #pauthor{font-size:10pt}}
