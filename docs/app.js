@@ -18,17 +18,40 @@ function safeHtml(root) {
 function countWords(node) { return (node.innerText.trim().match(/\S+/g) || []).length; }
 function update() {
   const val = id => $(id).value;
+  const template=val('#template');
+  const kind=template.startsWith('Постановление')?'decree':template.startsWith('Заключение')?'conclusion':template.startsWith('Уведомление')?'notice':template.startsWith('Рапорт')?'report':'custom';
+  $('.paper').dataset.kind=kind;
+  const head=$('#referenceHeader');head.replaceChildren();
+  const node=(tag,text,parent=head)=>{const el=document.createElement(tag);el.textContent=text;parent.appendChild(el);return el};
+  const lines=$('#intro').innerText.split('\n').map(x=>x.trim()).filter(Boolean);
+  if(kind==='decree'){
+    const top=node('div','',head);top.className='reference-agency';
+    const crest=$('.seal-emblem').cloneNode();crest.className='reference-crest';crest.alt='Эмблема';top.appendChild(crest);
+    node('strong','ФЕДЕРАЛЬНАЯ СЛУЖБА БЕЗОПАСНОСТИ\nУПРАВЛЕНИЕ СОБСТВЕННОЙ БЕЗОПАСНОСТИ\n(9 УПРАВЛЕНИЕ ФСБ РО)',top);
+    node('small','г. Москва, ул. Большая Лубянка, д. 27\n9usb.fsbro@gmail.ru',top);
+  }else if(kind==='conclusion'||kind==='report'){
+    node('div',lines[kind==='conclusion'?1:0]||'',head).className='reference-recipient';
+  }else if(kind==='notice'){
+    const columns=node('div','',head);columns.className='reference-columns';
+    node('div','ФЕДЕРАЛЬНАЯ\nСЛУЖБА БЕЗОПАСНОСТИ\n(ФСБ РО)\n\nУПРАВЛЕНИЕ «М»\n'+(val('#date')?new Date(val('#date')+'T12:00:00').toLocaleDateString('ru-RU'):'')+' №'+val('#code'),columns);
+    node('div',lines[0]||'',columns);
+  }
+  const dates=$('#referenceDate');dates.hidden=kind==='custom'||kind==='notice'||kind==='report';
+  dates.children[0].textContent=kind==='decree'?'г. Москва':val('#date')?new Date(val('#date')+'T12:00:00').toLocaleDateString('ru-RU'):'';
+  dates.children[1].textContent=kind==='decree'&&val('#date')?new Intl.DateTimeFormat('ru-RU',{day:'numeric',month:'long',year:'numeric'}).format(new Date(val('#date')+'T12:00:00')):'г. Москва';
   $('#pcode').textContent = val('#code');
   $('#pdate').textContent = val('#date') ? new Date(val('#date')+'T12:00:00').toLocaleDateString('ru-RU') : '';
   $('#ptype').textContent = ({'Постановление о привлечении к дисциплинарной ответственности':'ПОСТАНОВЛЕНИЕ','Заключение по результатам служебной проверки':'ЗАКЛЮЧЕНИЕ','Уведомление о проведении служебной проверки':'УВЕДОМЛЕНИЕ','Рапорт о нарушении требований внутреннего устава':'РАПОРТ'})[val('#template')] || val('#template').replace(' СК','').toUpperCase();
   $('#ptitle').textContent = val('#title');
   $('#pintro').innerHTML = safeHtml($('#intro'));
+  const skip=kind==='conclusion'?2:kind==='decree'||kind==='report'||kind==='notice'?1:0;
+  for(let i=0;i<skip;i++)$('#pintro').firstElementChild?.remove();
   for (const paragraph of $('#pintro').children) {
     paragraph.classList.toggle('doc-caption', /^УСТАНОВИЛ\s*:?\s*$/i.test(paragraph.textContent.trim()));
   }
   $('#ppoints').innerHTML = safeHtml($('#decision'));
-  $('#decisionCaption').textContent = val('#template').startsWith('Заключение') ? 'ВЫВОДЫ:' : 'ПОСТАНОВИЛ:';
-  $('#decisionCaption').hidden = !$('#decision').innerText.trim();
+  $('#decisionCaption').textContent = kind==='conclusion'?'':'ПОСТАНОВИЛ:';
+  $('#decisionCaption').hidden = kind!=='decree'||!$('#decision').innerText.trim();
   $('#decisionEditorLabel').textContent = val('#template').startsWith('Заключение') ? 'Выводы' : 'Постановил';
   $('#decisionEditorLabel').hidden = !$('#decision').innerText.trim();
   $('#pauthor').textContent = val('#author');
@@ -63,7 +86,7 @@ $('#loginForm').addEventListener('submit',async event=>{
   authToken=data.token;currentRole=data.role;$('#password').value='';await loadTemplates();$('#loginGate').hidden=true;$('.app').hidden=false;
  }catch(error){console.error(error);$('#loginError').textContent='Ошибка соединения'}finally{button.disabled=false}
 });
-function setParagraphs(element,value){element.replaceChildren();for(const line of value.split('\n')){const p=document.createElement('p');p.textContent=line||' ';element.appendChild(p)}}
+function setParagraphs(element,value){element.replaceChildren();for(const line of value.split('\n')){const p=document.createElement('p');if(/^УСТАНОВИЛ\s*:?\s*$/i.test(line.trim())){const strong=document.createElement('strong');strong.textContent=line;p.appendChild(strong)}else p.textContent=line||' ';element.appendChild(p)}}
 function setPoints(element,value){element.replaceChildren();if(!value)return;const ol=document.createElement('ol');for(const line of value.split('\n')){if(!line.trim())continue;const li=document.createElement('li');li.textContent=line;ol.appendChild(li)}element.appendChild(ol)}
 $('#addTemplate').onclick=async()=>{
  const name=prompt('Название нового шаблона:');if(!name?.trim())return;
@@ -95,13 +118,6 @@ $('#addPoint').onclick = () => {
   const range=document.createRange(); range.selectNodeContents(li); range.collapse(true);
   const sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(range); $('#decision').focus(); update();
 };
-$('#resetIntro').onclick=()=>{ $('#intro').textContent=''; update(); };
-$('#newDoc').onclick=()=>{
-  if(!confirm('Очистить документ?')) return;
-  ['title','code','author','position','signatureText'].forEach(id => $('#'+id).value='');
-  $('#intro').textContent=''; $('#decision').innerHTML='<ol><li><br></li></ol>';
-  $('#clearSignature').click(); update();
-};
 $('#printDoc').onclick=()=>window.print();
 let downloadTimer,downloadGeneration=0;
 function scheduleDownload(){
@@ -110,6 +126,7 @@ function scheduleDownload(){
   clearTimeout(downloadTimer);downloadTimer=setTimeout(()=>prepareDownload(generation),250);
 }
 async function prepareDownload(generation){
+  if($('.paper').dataset.kind!=='custom')return prepareReferenceDownload(generation);
   const button=$('#downloadDoc');
   try {
     const width=1240, margin=65, right=width-margin;
@@ -174,6 +191,85 @@ async function prepareDownload(generation){
     button.download=(docType.toLowerCase().replace(/[^а-яёa-z0-9]+/gi,'-')||'документ')+'.png';
     button.removeAttribute('aria-disabled');button.textContent='Скачать PNG';
     if(oldUrl)URL.revokeObjectURL(oldUrl);
+  }catch(error){console.error(error);if(generation===downloadGeneration)button.textContent='Ошибка подготовки PNG'}
+}
+async function prepareReferenceDownload(generation){
+  const button=$('#downloadDoc'),kind=$('.paper').dataset.kind;
+  try{
+    const canvas=document.createElement('canvas');canvas.width=1240;canvas.height=3000;
+    const ctx=canvas.getContext('2d'),center=620;
+    const paragraphs=[...$('#pintro').children].map(p=>p.innerText.trim()).filter(Boolean);
+    const points=[...$('#ppoints').querySelectorAll('li')].map(li=>li.innerText.trim());
+    const loadImage=src=>new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=src});
+    const crest=await loadImage($('.seal-emblem').src);
+    const stampEl=$('.stamp img'),stamp=stampEl?.src?await loadImage(stampEl.src):null;
+    const font=(size=26,bold=false,italic=false)=>`${italic?'italic ':''}${bold?'bold ':''}${size}px "Times New Roman", serif`;
+    function write(text,x,y,size=26,bold=false,align='left'){
+      ctx.font=font(size,bold);ctx.fillStyle='#111';ctx.textAlign=align;ctx.fillText(text,x,y);ctx.textAlign='left';
+    }
+    function wrap(text,x,y,width,size=26,indent=0,bold=false){
+      ctx.font=font(size,bold);const words=text.split(/\s+/).filter(Boolean),lines=[];let line='',first=true;
+      for(const word of words){const trial=line?line+' '+word:word;if(line&&ctx.measureText(trial).width>width-(first?indent:0)){lines.push(line);line=word;first=false}else line=trial}
+      if(line)lines.push(line);
+      for(let i=0;i<lines.length;i++){
+        const current=lines[i],left=x+(i===0?indent:0),available=width-(i===0?indent:0),parts=current.split(' ');
+        if(i<lines.length-1&&parts.length>1){ctx.font=font(size,bold);const total=parts.reduce((n,p)=>n+ctx.measureText(p).width,0),gap=(available-total)/(parts.length-1);let px=left;for(const part of parts){write(part,px,y,size,bold);px+=ctx.measureText(part).width+gap}}
+        else write(current,left,y,size,bold);
+        y+=size*1.43;
+      }
+      return y+size*.55;
+    }
+    function render(){
+      ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
+      const title=$('#ptype').textContent,subtitle=$('#ptitle').textContent;
+      let y,x=kind==='decree'?110:170,width=1240-x*2;
+      if(kind==='decree'){
+        ctx.drawImage(crest,center-35,170,70,112);
+        write('ФЕДЕРАЛЬНАЯ СЛУЖБА БЕЗОПАСНОСТИ',center,340,29,true,'center');
+        write('УПРАВЛЕНИЕ СОБСТВЕННОЙ БЕЗОПАСНОСТИ',center,374,29,true,'center');
+        write('(9 УПРАВЛЕНИЕ ФСБ РО)',center,408,27,true,'center');
+        write('г. Москва, ул. Большая Лубянка, д. 27',center,456,22,false,'center');
+        write('9usb.fsbro@gmail.ru',center,488,22,false,'center');
+        write(title,center,560,30,true,'center');write(subtitle.toLowerCase(),center,596,26,true,'center');
+        write('г. Москва',x,660,25);write($('#pdate').textContent,1240-x,660,25,false,'right');y=745;
+      }else if(kind==='conclusion'||kind==='report'){
+        const recipient=$('#referenceHeader').innerText.trim().split(/\n/);
+        let ry=215;for(const line of recipient){ry=wrap(line,670,ry,420,25,0,false)+2}
+        write(title,center,kind==='conclusion'?435:445,30,true,'center');
+        write(subtitle,center,kind==='conclusion'?476:510,25,false,'center');
+        if(kind==='conclusion'){write($('#pdate').textContent,170,548,25);write('г. Москва',1070,548,25,false,'right');y=615}
+        else y=640;
+      }else{
+        const left=$('#referenceHeader .reference-columns>div:first-child').innerText.split(/\n/);
+        const right=$('#referenceHeader .reference-columns>div:last-child').innerText.split(/(?=Кому:|От:|Email:)/).map(s=>s.trim()).filter(Boolean);
+        let hy=225;for(const line of left){if(line.trim())write(line,360,hy,25,/(УПРАВЛЕНИЕ)/.test(line),'center');hy+=33}
+        hy=230;for(const line of right){hy=wrap(line,730,hy,400,24)+5}
+        write(title,center,560,30,true,'center');write(subtitle.toLowerCase(),center,594,25,true,'center');y=650;
+      }
+      for(const paragraph of paragraphs){
+        if(/^УСТАНОВИЛ\s*:?\s*$/i.test(paragraph)){y+=6;write(paragraph,center,y,27,true,'center');y+=52;continue}
+        y=wrap(paragraph,x,y,width,26,66)+7;
+      }
+      if(kind==='decree'&&points.length){y+=9;write('ПОСТАНОВИЛ:',center,y,27,true,'center');y+=58}
+      points.forEach((point,i)=>{write((i+1)+'.',x+25,y,25);y=wrap(point,x+75,y,width-75,26)+18});
+      const footerY=Math.max(kind==='report'?1195:kind==='notice'?1330:1400,y+65);
+      const position=$('#pposition').textContent;
+      let py=footerY;for(const part of position.split(',').map(s=>s.trim())){write(part,x,py,25);py+=33}
+      if(stamp&&(kind==='decree'||kind==='conclusion'))ctx.drawImage(stamp,x+250,footerY-35,170,170);
+      const drawn=$('#psignatureImage');
+      if(!drawn.hidden&&$('#signaturePad'))ctx.drawImage($('#signaturePad'),780,footerY-45,230,60);
+      else if($('#signatureText').value)write($('#signatureText').value,880,footerY+20,27,false,'center');
+      write($('#pauthor').textContent,1080,footerY+18,25,false,'right');
+      if(kind==='report')write('Дата: '+$('#pdate').textContent,x,footerY+100,23);
+      return footerY+230;
+    }
+    let bottom=render(),needed=Math.max(1754,Math.ceil(bottom));
+    if(needed!==canvas.height){canvas.height=needed;render()}
+    const png=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+    if(!png)throw new Error('PNG не создан');if(generation!==downloadGeneration)return;
+    const oldUrl=button.dataset.blobUrl;button.href=URL.createObjectURL(png);button.dataset.blobUrl=button.href;
+    button.download=(kind+'-'+($('#pdate').textContent||'документ').replace(/[^0-9а-яёa-z]+/gi,'-'))+'.png';
+    button.removeAttribute('aria-disabled');button.textContent='Скачать PNG';if(oldUrl)URL.revokeObjectURL(oldUrl);
   }catch(error){console.error(error);if(generation===downloadGeneration)button.textContent='Ошибка подготовки PNG'}
 }
 function initSignature(){
