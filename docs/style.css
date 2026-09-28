@@ -81,3 +81,5 @@
 .paper[data-kind=decree] #pintro p,.paper[data-kind=decree] #ppoints li{font-size:2.25cqw!important}
 .paper[data-kind=decree] .reference-header{margin-bottom:6cqw}
 .paper:not([data-kind=custom]) .reference-date>span:first-child{white-space:pre-line}
+.paper[data-kind=conclusion] .stamp{border:3px double #3b3b3b;border-radius:50%;width:15cqw;height:15cqw;transform:none;display:grid;place-items:center}
+.paper[data-kind=conclusion] .stamp img{width:8cqw;height:11cqw;filter:grayscale(1);opacity:.8}
