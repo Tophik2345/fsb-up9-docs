@@ -64,7 +64,14 @@ function update() {
   $('#pointsCount').textContent = countWords($('#decision')) + ' слов';
   scheduleDownload();
 }
-document.querySelectorAll('input,select,[contenteditable]').forEach(el => el.addEventListener('input',update));
+document.querySelectorAll('input:not(#code),select,[contenteditable]').forEach(el => el.addEventListener('input',update));
+let codeUpdateTimer;
+$('#code').addEventListener('input',()=>{
+  clearTimeout(codeUpdateTimer);
+  scheduleDownload();
+  codeUpdateTimer=setTimeout(update,180);
+});
+$('#code').addEventListener('change',()=>{clearTimeout(codeUpdateTimer);update()});
 let templates={};
 let authToken='',currentRole='';
 const ENDPOINT='https://hpeqnqsgcqskjpdjkxcm.supabase.co/functions/v1/fsb9-docs';
