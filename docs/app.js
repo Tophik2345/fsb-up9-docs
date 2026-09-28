@@ -27,8 +27,7 @@ function update() {
   const lines=$('#intro').innerText.split('\n').map(x=>x.trim()).filter(Boolean);
   if(kind==='decree'){
     const top=node('div','',head);top.className='reference-agency';
-    const crest=$('.seal-emblem').cloneNode();crest.className='reference-crest';crest.alt='Эмблема';top.appendChild(crest);
-    node('strong','ФЕДЕРАЛЬНАЯ СЛУЖБА БЕЗОПАСНОСТИ\nУПРАВЛЕНИЕ СОБСТВЕННОЙ БЕЗОПАСНОСТИ\n(9 УПРАВЛЕНИЕ ФСБ РО)',top);
+    node('strong','УПРАВЛЕНИЕ СОБСТВЕННОЙ БЕЗОПАСНОСТИ\n(9 УПРАВЛЕНИЕ ФСБ РО)',top);
     node('small','г. Москва, ул. Большая Лубянка, д. 27\n9usb.fsbro@gmail.ru',top);
   }else if(kind==='conclusion'||kind==='report'){
     node('div',lines[kind==='conclusion'?1:0]||'',head).className='reference-recipient';
@@ -211,7 +210,6 @@ async function prepareReferenceDownload(generation){
     const paragraphs=[...$('#pintro').children].map(p=>p.innerText.trim()).filter(Boolean);
     const points=[...$('#ppoints').querySelectorAll('li')].map(li=>li.innerText.trim());
     const loadImage=src=>new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=src});
-    const crest=await loadImage($('.seal-emblem').src);
     const stampEl=$('.stamp img'),stamp=stampEl?.src?await loadImage(stampEl.src):null;
     const font=(size=26,bold=false,italic=false)=>`${italic?'italic ':''}${bold?'bold ':''}${size}px "Times New Roman", serif`;
     function write(text,x,y,size=26,bold=false,align='left'){
@@ -234,14 +232,13 @@ async function prepareReferenceDownload(generation){
       const title=$('#ptype').textContent,subtitle=$('#ptitle').textContent;
       let y,x=kind==='decree'?110:170,width=1240-x*2;
       if(kind==='decree'){
-        ctx.drawImage(crest,center-35,170,70,112);
-        write('ФЕДЕРАЛЬНАЯ СЛУЖБА БЕЗОПАСНОСТИ',center,340,29,true,'center');
-        write('УПРАВЛЕНИЕ СОБСТВЕННОЙ БЕЗОПАСНОСТИ',center,374,29,true,'center');
-        write('(9 УПРАВЛЕНИЕ ФСБ РО)',center,408,27,true,'center');
-        write('г. Москва, ул. Большая Лубянка, д. 27',center,456,22,false,'center');
-        write('9usb.fsbro@gmail.ru',center,488,22,false,'center');
-        write(title,center,560,30,true,'center');write(subtitle.toLowerCase(),center,596,26,true,'center');
-        write('г. Москва',x,660,25);write($('#pdate').textContent,1240-x,660,25,false,'right');y=745;
+        write('УПРАВЛЕНИЕ СОБСТВЕННОЙ БЕЗОПАСНОСТИ',center,110,29,true,'center');
+        write('(9 УПРАВЛЕНИЕ ФСБ РО)',center,147,27,true,'center');
+        write('г. Москва, ул. Большая Лубянка, д. 27',center,210,22,false,'center');
+        write('9usb.fsbro@gmail.ru',center,242,22,false,'center');
+        write(title,center,342,34,true,'center');write(subtitle,center,390,27,true,'center');
+        write('г. Москва',x,520,25);
+        write($('#referenceDate').children[1].textContent,1240-x,520,25,false,'right');y=615;
       }else if(kind==='conclusion'||kind==='report'){
         const recipient=$('#referenceHeader').innerText.trim().split(/\n/);
         let ry=215;for(const line of recipient){ry=wrap(line,670,ry,420,25,0,false)+2}
@@ -262,14 +259,22 @@ async function prepareReferenceDownload(generation){
       }
       if(kind==='decree'&&points.length){y+=9;write('ПОСТАНОВИЛ:',center,y,27,true,'center');y+=58}
       points.forEach((point,i)=>{write((i+1)+'.',x+25,y,25);y=wrap(point,x+75,y,width-75,26)+18});
-      const footerY=Math.max(kind==='report'?1195:kind==='notice'?1330:1400,y+65);
+      const footerY=Math.max(kind==='decree'?1490:kind==='report'?1195:kind==='notice'?1330:1400,y+65);
       const position=$('#pposition').textContent;
-      let py=footerY;for(const part of position.split(',').map(s=>s.trim())){write(part,x,py,25);py+=33}
-      if(stamp&&(kind==='decree'||kind==='conclusion'))ctx.drawImage(stamp,x+250,footerY-35,170,170);
+      if(kind==='decree'){
+        let py=footerY+33;for(const part of position.split(',').map(s=>s.trim())){write(part,1240-x,py,25,false,'right');py+=33}
+      }else{
+        let py=footerY;for(const part of position.split(',').map(s=>s.trim())){write(part,x,py,25);py+=33}
+      }
+      if(stamp&&(kind==='decree'||kind==='conclusion')){
+        if(kind==='decree'){ctx.save();ctx.globalAlpha=.13;ctx.filter='grayscale(1)';ctx.drawImage(stamp,x+30,footerY-35,100,125);ctx.restore()}
+        else ctx.drawImage(stamp,x+250,footerY-35,170,170);
+      }
       const drawn=$('#psignatureImage');
-      if(!drawn.hidden&&$('#signaturePad'))ctx.drawImage($('#signaturePad'),780,footerY-45,230,60);
-      else if($('#signatureText').value)write($('#signatureText').value,880,footerY+20,27,false,'center');
-      write($('#pauthor').textContent,1080,footerY+18,25,false,'right');
+      const signatureY=kind==='decree'?footerY-67:footerY-45;
+      if(!drawn.hidden&&$('#signaturePad'))ctx.drawImage($('#signaturePad'),780,signatureY,230,60);
+      else if($('#signatureText').value)write($('#signatureText').value,880,signatureY+45,27,false,'center');
+      write($('#pauthor').textContent,1080,kind==='decree'?footerY+99:footerY+18,25,false,'right');
       if(kind==='report')write('Дата: '+$('#pdate').textContent,x,footerY+100,23);
       return footerY+230;
     }
