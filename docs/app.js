@@ -103,12 +103,13 @@ $('#newDoc').onclick=()=>{
   $('#clearSignature').click(); update();
 };
 $('#printDoc').onclick=()=>window.print();
-let downloadTimer;
+let downloadTimer,downloadGeneration=0;
 function scheduleDownload(){
   const anchor=$('#downloadDoc'); anchor.removeAttribute('href');anchor.setAttribute('aria-disabled','true');anchor.textContent='Подготовка PNG…';
-  clearTimeout(downloadTimer);downloadTimer=setTimeout(prepareDownload,250);
+  const generation=++downloadGeneration;
+  clearTimeout(downloadTimer);downloadTimer=setTimeout(()=>prepareDownload(generation),250);
 }
-async function prepareDownload(){
+async function prepareDownload(generation){
   const button=$('#downloadDoc');
   try {
     const width=1240, margin=65, right=width-margin;
@@ -167,12 +168,13 @@ async function prepareDownload(){
     ctx.textAlign='right';line($('#pposition').textContent,right,footerY+113,20);line($('#pauthor').textContent,right,footerY+139,21,true);ctx.textAlign='left';
     const png=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
     if(!png)throw new Error('PNG не создан');
+    if(generation!==downloadGeneration)return;
     const oldUrl=button.dataset.blobUrl;
     button.href=URL.createObjectURL(png);button.dataset.blobUrl=button.href;
     button.download=(docType.toLowerCase().replace(/[^а-яёa-z0-9]+/gi,'-')||'документ')+'.png';
     button.removeAttribute('aria-disabled');button.textContent='Скачать PNG';
     if(oldUrl)URL.revokeObjectURL(oldUrl);
-  }catch(error){console.error(error);button.textContent='Ошибка подготовки PNG'}
+  }catch(error){console.error(error);if(generation===downloadGeneration)button.textContent='Ошибка подготовки PNG'}
 }
 function initSignature(){
   const canvas=$('#signaturePad'),ctx=canvas.getContext('2d'); let drawing=false,hasInk=false;
