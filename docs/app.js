@@ -278,7 +278,7 @@ async function prepareReferenceDownload(generation){
         let py=footerY;for(const part of position.split(',').map(s=>s.trim())){write(part,x,py,25);py+=33}
       }
       if(stamp&&(kind==='decree'||kind==='conclusion')){
-        if(kind==='decree'){ctx.save();ctx.globalAlpha=.38;ctx.drawImage(grayStamp,x+35,footerY-45,78,135);ctx.restore()}
+        if(kind==='decree'){ctx.save();ctx.globalAlpha=.7;ctx.drawImage(grayStamp,x+25,footerY-65,100,170);ctx.restore()}
         else ctx.drawImage(stamp,x+250,footerY-35,170,170);
       }
       const drawn=$('#psignatureImage');
