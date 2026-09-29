@@ -34,7 +34,7 @@ function update() {
   const lines=$('#intro').innerText.split('\n').map(x=>x.trim()).filter(Boolean);
   if(kind==='decree'){
     const top=node('div','',head);top.className='reference-agency';
-    node('strong','УПРАВЛЕНИЕ СОБСТВЕННОЙ БЕЗОПАСНОСТИ\n(9 УПРАВЛЕНИЕ ФСБ РО)',top);
+    node('strong','ФЕДЕРАЛЬНАЯ СЛУЖБА БЕЗОПАСНОСТИ\nУПРАВЛЕНИЕ СОБСТВЕННОЙ БЕЗОПАСНОСТИ\n(9 УПРАВЛЕНИЕ ФСБ РО)',top);
     node('small','г. Москва, ул. Большая Лубянка, д. 27\n9usb.fsbro@gmail.ru',top);
   }else if(kind==='conclusion'||kind==='report'){
     node('div',lines[kind==='conclusion'?1:0]||'',head).className='reference-recipient';
@@ -249,14 +249,15 @@ async function prepareReferenceDownload(generation){
       const title=$('#ptype').textContent,subtitle=$('#ptitle').textContent;
       let y,x=kind==='decree'?110:170,width=1240-x*2;
       if(kind==='decree'){
-        write('УПРАВЛЕНИЕ СОБСТВЕННОЙ БЕЗОПАСНОСТИ',center,330,29,true,'center');
-        write('(9 УПРАВЛЕНИЕ ФСБ РО)',center,367,27,true,'center');
-        write('г. Москва, ул. Большая Лубянка, д. 27',center,430,22,false,'center');
-        write('9usb.fsbro@gmail.ru',center,462,22,false,'center');
-        write(title,center,552,34,true,'center');write(subtitle,center,600,27,true,'center');
-        write('г. Москва',x,710,25);
-        if($('#pcode').textContent)write('№ '+$('#pcode').textContent,x,746,23);
-        y=790;
+        write('ФЕДЕРАЛЬНАЯ СЛУЖБА БЕЗОПАСНОСТИ',center,310,29,true,'center');
+        write('УПРАВЛЕНИЕ СОБСТВЕННОЙ БЕЗОПАСНОСТИ',center,346,29,true,'center');
+        write('(9 УПРАВЛЕНИЕ ФСБ РО)',center,382,27,true,'center');
+        write('г. Москва, ул. Большая Лубянка, д. 27',center,445,22,false,'center');
+        write('9usb.fsbro@gmail.ru',center,477,22,false,'center');
+        write(title,center,567,34,true,'center');write(subtitle,center,615,27,true,'center');
+        write('г. Москва',x,725,25);
+        if($('#pcode').textContent)write('№ '+$('#pcode').textContent,x,761,23);
+        y=805;
       }else if(kind==='conclusion'||kind==='report'){
         const recipient=$('#referenceHeader').innerText.trim().split(/\n/);
         let ry=215;for(const line of recipient){ry=wrap(line,700,ry,390,25,0,false)+2}
