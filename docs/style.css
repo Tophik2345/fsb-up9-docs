@@ -147,3 +147,4 @@
 .paper[data-kind=custom] .paperhead{padding-top:27cqw}
 .paper[data-kind=custom] .seal-emblem{position:absolute;left:50%;top:2cqw;transform:translateX(-50%);width:13cqw;height:24cqw}
 @media print{.paper:not([data-kind=custom]) .document-crest{width:28mm;height:52mm;top:5mm}.paper[data-kind=decree] .reference-header{padding-top:55mm}.paper[data-kind=custom] .seal-emblem{width:28mm;height:52mm;top:5mm}.paper[data-kind=custom] .paperhead{padding-top:55mm}.paper .footer-left,.paper .sign .footer-date,.paper .sign #pauthor{font-size:10pt}}
+.paper .sign em:empty{display:none}

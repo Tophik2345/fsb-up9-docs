@@ -64,7 +64,8 @@ function update() {
   $('#pauthor').textContent = val('#author');
   $('#pposition').textContent = val('#position');
   $('#pfooterdate').textContent = $('#pdate').textContent;
-  $('#psignature').textContent = val('#signatureText');
+  const typedSignature=val('#signatureText').trim();
+  $('#psignature').textContent = typedSignature===val('#author').trim()?'':typedSignature;
   $('#breadcrumb').textContent = val('#title');
   $('#introCount').textContent = countWords($('#intro')) + ' слов';
   $('#pointsCount').textContent = countWords($('#decision')) + ' слов';
@@ -129,7 +130,7 @@ $('#template').addEventListener('change',()=>{
   const doc=templates[$('#template').value]; if(!doc) return;
   for(const button of $('#sideTemplates').children)button.classList.toggle('active',button.lastElementChild?.textContent===doc.name);
   for(const key of ['title','code','date','author','position']) $('#'+key).value=doc[key];
-  $('#signatureText').value=doc.signature;
+  $('#signatureText').value=(doc.signature||'').trim()===(doc.author||'').trim()?'':(doc.signature||'');
   setParagraphs($('#intro'),doc.intro);
   setPoints($('#decision'),doc.decision);
   $('#clearSignature').click(); update();
@@ -206,7 +207,7 @@ async function prepareDownload(generation){
     ctx.textAlign='right';line('Дата: '+$('#pdate').textContent,right,footerY+38,21);line($('#pauthor').textContent,right,footerY+75,23,true);ctx.textAlign='left';
     const signature=$('#psignatureImage');
     if(!signature.hidden&&signature.src){const signImg=await imageLoaded(signature.src);ctx.drawImage(signImg,right-300,footerY+95,260,75)}
-    else {ctx.textAlign='right';line($('#signatureText').value,right,footerY+143,36,false,'#576584',true);ctx.textAlign='left'}
+    else {ctx.textAlign='right';line($('#psignature').textContent,right,footerY+143,36,false,'#576584',true);ctx.textAlign='left'}
     const png=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
     if(!png)throw new Error('PNG не создан');
     if(generation!==downloadGeneration)return;
@@ -285,7 +286,7 @@ async function prepareReferenceDownload(generation){
       write('Дата: '+$('#pdate').textContent,1240-x,footerY+20,23,false,'right');
       write($('#pauthor').textContent,1240-x,footerY+58,25,true,'right');
       if(!drawn.hidden&&$('#signaturePad'))ctx.drawImage($('#signaturePad'),780,footerY+82,230,70);
-      else if($('#signatureText').value)write($('#signatureText').value,880,footerY+130,27,false,'center');
+      else if($('#psignature').textContent)write($('#psignature').textContent,880,footerY+130,27,false,'center');
       return footerY+230;
     }
     let bottom=render(),needed=Math.max(1754,Math.ceil(bottom));
