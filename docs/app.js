@@ -61,7 +61,7 @@ function update() {
   $('#decisionCaption').hidden = kind!=='decree'||!$('#decision').innerText.trim();
   $('#decisionEditorLabel').textContent = val('#template').startsWith('Заключение') ? 'Выводы' : 'Постановил';
   $('#decisionEditorLabel').hidden = !$('#decision').innerText.trim();
-  $('#pauthor').textContent = val('#signerName').trim()||val('#author');
+  $('#pauthor').textContent = val('#author');
   $('#pposition').textContent = val('#position');
   $('#pfooterdate').textContent = $('#pdate').textContent;
   $('#psignature').textContent = val('#signatureText');
@@ -129,7 +129,6 @@ $('#template').addEventListener('change',()=>{
   const doc=templates[$('#template').value]; if(!doc) return;
   for(const button of $('#sideTemplates').children)button.classList.toggle('active',button.lastElementChild?.textContent===doc.name);
   for(const key of ['title','code','date','author','position']) $('#'+key).value=doc[key];
-  $('#signerName').value='';
   $('#signatureText').value=doc.signature;
   setParagraphs($('#intro'),doc.intro);
   setPoints($('#decision'),doc.decision);
