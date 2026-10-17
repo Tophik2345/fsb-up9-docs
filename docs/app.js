@@ -19,6 +19,12 @@ function safeHtml(root) {
   return output.innerHTML;
 }
 function countWords(node) { return (node.innerText.trim().match(/\S+/g) || []).length; }
+function editorLines(root) {
+  const copy=root.cloneNode(true);
+  copy.querySelectorAll('br').forEach(node=>node.replaceWith('\n'));
+  copy.querySelectorAll('p,div,li').forEach(node=>node.append('\n'));
+  return copy.textContent.split('\n').map(line=>line.trim()).filter(Boolean);
+}
 function update() {
   const val = id => $(id).value;
   const template=val('#template');
@@ -32,7 +38,7 @@ function update() {
   if(stampChoice)stampEl.src=`up9-stamp-${stampChoice}.webp`;
   const head=$('#referenceHeader');head.replaceChildren();
   const node=(tag,text,parent=head)=>{const el=document.createElement(tag);el.textContent=text;parent.appendChild(el);return el};
-  const lines=$('#intro').innerText.split('\n').map(x=>x.trim()).filter(Boolean);
+  const lines=editorLines($('#intro'));
   if(kind==='decree'){
     const top=node('div','',head);top.className='reference-agency';
     node('strong','ФЕДЕРАЛЬНАЯ СЛУЖБА БЕЗОПАСНОСТИ\nУПРАВЛЕНИЕ СОБСТВЕННОЙ БЕЗОПАСНОСТИ\n(9 УПРАВЛЕНИЕ ФСБ РО)',top);
