@@ -126,8 +126,7 @@ function update() {
   $('#decisionEditorLabel').textContent = val('#template').startsWith('Заключение') ? 'Выводы' : 'Постановил';
   $('#decisionEditorLabel').hidden = !$('#decision').innerText.trim();
   const typedSignature=val('#signatureText').trim();
-  const normalizeName=text=>text.trim().replace(/\s+/g,' ').toLocaleLowerCase('ru-RU').replace(/ё/g,'е');
-  $('#pauthor').textContent = typedSignature && normalizeName(typedSignature)===normalizeName(val('#author')) ? '' : val('#author');
+  $('#pauthor').textContent = typedSignature ? '' : val('#author');
   $('#pposition').textContent = positionLines(val('#position')).join('\n');
   $('#pfooterdate').textContent = $('#pdate').textContent;
   $('#psignature').textContent = typedSignature;
