@@ -26,7 +26,14 @@ function editorLines(root) {
   return copy.textContent.split('\n').map(line=>line.trim()).filter(Boolean);
 }
 function keepRecipientNameTogether(text) {
-  return text.replace(/([А-ЯЁ][а-яё-]+)[ \t]+([А-ЯЁ][а-яё-]+)([.,]?)$/u,'$1\u00a0$2$3');
+  return text.trim().replace(/([а-яё-]+)[ \t\u00a0]+([а-яё-]+)([.,]?)$/iu,'$1\u00a0$2$3');
+}
+function positionLines(text) {
+  return text.split(/[,\n]+/).map(line=>line.trim().replace(/(\S+)[ \t\u00a0]+(ФСБ)(?=$|[\s.,;:])/giu,'$1\u00a0$2')).filter(Boolean);
+}
+function decisionLines(root) {
+  const items=[...root.querySelectorAll('li')];
+  return items.length?items.map(item=>item.textContent.trim()).filter(Boolean):editorLines(root);
 }
 function update() {
   const val = id => $(id).value;
@@ -51,7 +58,7 @@ function update() {
   }else if(kind==='notice'){
     const columns=node('div','',head);columns.className='reference-columns';
     node('div','ФЕДЕРАЛЬНАЯ\nСЛУЖБА БЕЗОПАСНОСТИ\n(ФСБ РО)\n\n'+val('#department').trim().toLocaleUpperCase('ru-RU')+(documentCode?'\n№ '+documentCode:''),columns);
-    node('div',lines[0]||'',columns);
+    node('div',(lines[0]||'').split(/(?=От:|Email:)/iu).map(keepRecipientNameTogether).join(' '),columns);
   }
   const dates=$('#referenceDate');dates.hidden=kind==='custom'||kind==='notice'||kind==='report';
   dates.children[0].textContent=(kind==='decree'?'г. Москва':'')+(documentCode?'\n№ '+documentCode:'');
@@ -74,7 +81,7 @@ function update() {
   const typedSignature=val('#signatureText').trim();
   const normalizeName=text=>text.trim().replace(/\s+/g,' ').toLocaleLowerCase('ru-RU').replace(/ё/g,'е');
   $('#pauthor').textContent = typedSignature && normalizeName(typedSignature)===normalizeName(val('#author')) ? '' : val('#author');
-  $('#pposition').textContent = val('#position');
+  $('#pposition').textContent = positionLines(val('#position')).join('\n');
   $('#pfooterdate').textContent = $('#pdate').textContent;
   $('#psignature').textContent = typedSignature;
   $('#breadcrumb').textContent = val('#title');
@@ -195,8 +202,8 @@ async function prepareDownload(generation){
     y=735;
     for(const p of paragraphs)paragraph(p.text,p.bold);
     if(!$('#decisionCaption').hidden){y+=12;centerCaption($('#decisionCaption').textContent)}
-    const items=[...$('#ppoints').querySelectorAll('li')].map(li=>li.innerText);
-    for(let i=0;i<items.length;i++){wrapped((i+1)+'. '+items[i],margin+22,right-margin-22,25);y+=9}
+    const items=decisionLines($('#ppoints')),numbered=!!$('#ppoints li');
+    for(let i=0;i<items.length;i++){wrapped((numbered?(i+1)+'. ':'')+items[i],margin+22,right-margin-22,25);y+=9}
     const footerY=Math.max(1640,y+55),height=footerY+240;
     canvas.width=width;canvas.height=height;
     ctx.fillStyle='#e6e6e5';ctx.fillRect(0,0,width,height);
@@ -215,7 +222,7 @@ async function prepareDownload(generation){
     y=735;
     for(const p of paragraphs)paragraph(p.text,p.bold);
     if(!$('#decisionCaption').hidden){y+=12;centerCaption($('#decisionCaption').textContent)}
-    for(let i=0;i<items.length;i++){wrapped((i+1)+'. '+items[i],margin+22,right-margin-22,25);y+=9}
+    for(let i=0;i<items.length;i++){wrapped((numbered?(i+1)+'. ':'')+items[i],margin+22,right-margin-22,25);y+=9}
     ctx.strokeStyle='#aaa';ctx.beginPath();ctx.moveTo(margin,footerY);ctx.lineTo(right,footerY);ctx.stroke();
     line($('#pposition').textContent,margin,footerY+38,21);
     if($('#stampChoice').value){const seal=await imageLoaded($('.stamp img').src);ctx.drawImage(seal,margin,footerY+65,125,125)}
@@ -239,7 +246,7 @@ async function prepareReferenceDownload(generation){
     const canvas=document.createElement('canvas');canvas.width=1240;canvas.height=3000;
     const ctx=canvas.getContext('2d'),center=620;
     const paragraphs=[...$('#pintro').children].map(p=>p.innerText.trim()).filter(Boolean);
-    const points=[...$('#ppoints').querySelectorAll('li')].map(li=>li.innerText.trim());
+    const points=decisionLines($('#ppoints')),numbered=!!$('#ppoints li');
     const loadImage=src=>new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=src});
     const stampEl=$('.stamp img'),stamp=$('#stampChoice').value?await loadImage(stampEl.src):null;
     const crest=await loadImage(crestSrc);
@@ -247,14 +254,14 @@ async function prepareReferenceDownload(generation){
     function write(text,x,y,size=26,bold=false,align='left'){
       ctx.font=font(size,bold);ctx.fillStyle='#111';ctx.textAlign=align;ctx.fillText(text,x,y);ctx.textAlign='left';
     }
-    function wrap(text,x,y,width,size=26,indent=0,bold=false){
+    function wrap(text,x,y,width,size=26,indent=0,bold=false,align='justify'){
       ctx.font=font(size,bold);const words=text.split(/[ \t\r\n]+/).filter(Boolean),lines=[];let line='',first=true;
       for(const word of words){const trial=line?line+' '+word:word;if(line&&ctx.measureText(trial).width>width-(first?indent:0)){lines.push(line);line=word;first=false}else line=trial}
       if(line)lines.push(line);
       for(let i=0;i<lines.length;i++){
         const current=lines[i],left=x+(i===0?indent:0),available=width-(i===0?indent:0),parts=current.split(' ');
-        if(i<lines.length-1&&parts.length>1){ctx.font=font(size,bold);const total=parts.reduce((n,p)=>n+ctx.measureText(p).width,0),gap=(available-total)/(parts.length-1);let px=left;for(const part of parts){write(part,px,y,size,bold);px+=ctx.measureText(part).width+gap}}
-        else write(current,left,y,size,bold);
+        if(align==='justify'&&i<lines.length-1&&parts.length>1){ctx.font=font(size,bold);const total=parts.reduce((n,p)=>n+ctx.measureText(p).width,0),gap=(available-total)/(parts.length-1);let px=left;for(const part of parts){write(part,px,y,size,bold);px+=ctx.measureText(part).width+gap}}
+        else write(current,align==='right'?x+width:align==='center'?x+width/2:left,y,size,bold,align==='right'||align==='center'?align:'left');
         y+=size*1.43;
       }
       return y+size*.55;
@@ -274,36 +281,41 @@ async function prepareReferenceDownload(generation){
         if($('#pcode').textContent)write('№ '+$('#pcode').textContent,x,761,23);
         y=805;
       }else if(kind==='conclusion'||kind==='report'){
-        const recipient=$('#referenceHeader').innerText.trim().split(/\n/);
-        let ry=215;for(const line of recipient){ry=wrap(line,700,ry,390,25,0,false)+2}
-        write(title,center,kind==='conclusion'?435:445,30,true,'center');
-        write(subtitle,center,kind==='conclusion'?476:510,25,false,'center');
-        if(kind==='conclusion'){if($('#pcode').textContent)write('№ '+$('#pcode').textContent,170,580,23);write('г. Москва',1070,548,25,false,'right');y=615}
-        else y=640;
+        const recipient=$('#referenceHeader').textContent.trim().split(/\n/);
+        let ry=215;for(const line of recipient){ry=wrap(line,700,ry,390,25,0,false,'right')+2}
+        const titleY=Math.max(kind==='conclusion'?435:445,ry+42);
+        write(title,center,titleY,30,true,'center');
+        const subtitleBottom=wrap(subtitle,x,titleY+(kind==='conclusion'?41:65),width,25,0,false,'center');
+        if(kind==='conclusion'){const cityY=Math.max(548,subtitleBottom+35);if($('#pcode').textContent)write('№ '+$('#pcode').textContent,170,cityY+32,23);write('г. Москва',1070,cityY,25,false,'right');y=Math.max(615,cityY+67)}
+        else y=Math.max(640,subtitleBottom+74);
       }else{
-        const left=$('#referenceHeader .reference-columns>div:first-child').innerText.split(/\n/);
-        const right=$('#referenceHeader .reference-columns>div:last-child').innerText.split(/(?=Кому:|От:|Email:)/).map(s=>s.trim()).filter(Boolean);
+        const left=$('#referenceHeader .reference-columns>div:first-child').textContent.split(/\n/);
+        const right=$('#referenceHeader .reference-columns>div:last-child').textContent.split(/(?=Кому:|От:|Email:)/iu).map(s=>s.trim()).filter(Boolean);
         let hy=225;for(const line of left){if(line.trim())write(line,360,hy,25,/(УПРАВЛЕНИЕ)/.test(line),'center');hy+=33}
-        hy=230;for(const line of right){hy=wrap(line,730,hy,400,24)+5}
-        write(title,center,560,30,true,'center');write(subtitle.toLowerCase(),center,594,25,true,'center');y=650;
+        const leftBottom=hy;
+        hy=230;for(const line of right){hy=wrap(line,730,hy,400,24,0,false,'right')+5}
+        const titleY=Math.max(560,hy+35,leftBottom+35);
+        write(title,center,titleY,30,true,'center');
+        y=wrap(subtitle,x,titleY+42,width,25,0,true,'center')+35;
       }
       for(const paragraph of paragraphs){
         if(/^УСТАНОВИЛ\s*:?\s*$/i.test(paragraph)){y+=6;write(paragraph,center,y,27,true,'center');y+=52;continue}
         y=wrap(paragraph,x,y,width,26,66)+7;
       }
       if(kind==='decree'&&points.length){y+=9;write('ПОСТАНОВИЛ:',center,y,27,true,'center');y+=58}
-      points.forEach((point,i)=>{write((i+1)+'.',x+25,y,25);y=wrap(point,x+75,y,width-75,26)+18});
+      points.forEach((point,i)=>{if(numbered)write((i+1)+'.',x+25,y,25);y=wrap(point,numbered?x+75:x,y,numbered?width-75:width,26)+18});
       const footerY=Math.max(kind==='decree'?1490:kind==='report'?1195:kind==='notice'?1330:1400,y+65);
       const position=$('#pposition').textContent;
-      let py=footerY+15;for(const part of position.split(',').map(s=>s.trim())){write(part,x,py,25);py+=33}
+      let py=footerY+15;for(const part of positionLines(position)){py=wrap(part,x,py,width*.48,25,0,false,'left')}
       ctx.drawImage(crest,555,25,130,245);
-      if(stamp)ctx.drawImage(stamp,x+8,footerY+70,135,135);
+      const stampY=Math.max(footerY+70,py+15);
+      if(stamp)ctx.drawImage(stamp,x+8,stampY,135,135);
       const drawn=$('#psignatureImage');
       write('Дата: '+$('#pdate').textContent,1240-x,footerY+20,23,false,'right');
       write($('#pauthor').textContent,1240-x,footerY+58,25,true,'right');
       if(!drawn.hidden&&$('#signaturePad'))ctx.drawImage($('#signaturePad'),780,footerY+82,230,70);
       else if($('#psignature').textContent)write($('#psignature').textContent,880,footerY+130,27,false,'center');
-      return footerY+230;
+      return Math.max(footerY+230,stamp?stampY+160:py+25);
     }
     let bottom=render(),needed=Math.max(1754,Math.ceil(bottom));
     if(needed!==canvas.height){canvas.height=needed;render()}
