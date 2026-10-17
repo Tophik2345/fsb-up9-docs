@@ -126,7 +126,7 @@ function update() {
   $('#decisionEditorLabel').textContent = val('#template').startsWith('Заключение') ? 'Выводы' : 'Постановил';
   $('#decisionEditorLabel').hidden = !$('#decision').innerText.trim();
   const typedSignature=val('#signatureText').trim();
-  $('#pauthor').textContent = typedSignature ? '' : val('#author');
+  $('#pauthor').textContent = val('#author');
   $('#pposition').textContent = positionLines(val('#position')).join('\n');
   $('#pfooterdate').textContent = $('#pdate').textContent;
   $('#psignature').textContent = typedSignature;
@@ -375,8 +375,8 @@ async function prepareReferenceDownload(generation){
       const drawn=$('#psignatureImage');
       write('Дата: '+$('#pdate').textContent,1240-x,footerY+20,23,false,'right');
       write($('#pauthor').textContent,1240-x,footerY+58,25,true,'right');
-      if(!drawn.hidden&&$('#signaturePad'))ctx.drawImage($('#signaturePad'),780,footerY+82,230,70);
-      else if($('#psignature').textContent)write($('#psignature').textContent,880,footerY+130,27,false,'center');
+      if(!drawn.hidden&&$('#signaturePad'))ctx.drawImage($('#signaturePad'),1240-x-260,footerY+82,260,70);
+      else if($('#psignature').textContent){ctx.font=font(32,false,true);ctx.fillStyle='#576584';ctx.textAlign='right';ctx.fillText($('#psignature').textContent,1240-x,footerY+130,320);ctx.textAlign='left'}
       return Math.max(footerY+230,stamp?stampY+160:py+25);
     }
     let bottom=render(),needed=Math.max(1754,Math.ceil(bottom));
