@@ -93,7 +93,11 @@ async function loadTemplates(){
  const role=currentRole;$('#roleBadge').textContent=role==='admin'?'Администратор':'Пользователь';
  $('#addTemplate').hidden=role!=='admin';$('#deleteTemplate').hidden=role!=='admin';
  const response=await api('templates');if(!response.ok)throw new Error('Не удалось загрузить шаблоны');
- const list=await response.json();templates=Object.fromEntries(list.map(t=>[t.name,t]));
+ const list=await response.json();
+ const templateOrder=['Рапорт о нарушении требований внутреннего устава','Уведомление о проведении служебной проверки','Заключение по результатам служебной проверки','Постановление о привлечении к дисциплинарной ответственности'];
+ const rank=name=>{const index=templateOrder.indexOf(name);return index<0?templateOrder.length:index};
+ list.sort((a,b)=>rank(a.name)-rank(b.name));
+ templates=Object.fromEntries(list.map(t=>[t.name,t]));
  $('#template').replaceChildren(...list.map(t=>new Option(t.name,t.name)));
  const side=$('#sideTemplates');side.replaceChildren(...list.map((t,index)=>{
    const button=document.createElement('button');button.type='button';button.className='side-template';
