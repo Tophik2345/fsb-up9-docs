@@ -25,6 +25,9 @@ function editorLines(root) {
   copy.querySelectorAll('p,div,li').forEach(node=>node.append('\n'));
   return copy.textContent.split('\n').map(line=>line.trim()).filter(Boolean);
 }
+function keepRecipientNameTogether(text) {
+  return text.replace(/([А-ЯЁ][а-яё-]+)[ \t]+([А-ЯЁ][а-яё-]+)([.,]?)$/u,'$1\u00a0$2$3');
+}
 function update() {
   const val = id => $(id).value;
   const template=val('#template');
@@ -44,7 +47,7 @@ function update() {
     node('strong','ФЕДЕРАЛЬНАЯ СЛУЖБА БЕЗОПАСНОСТИ\nУПРАВЛЕНИЕ СОБСТВЕННОЙ БЕЗОПАСНОСТИ\n(9 УПРАВЛЕНИЕ ФСБ РО)',top);
     node('small','г. Москва, ул. Большая Лубянка, д. 27\n9usb.fsbro@gmail.ru',top);
   }else if(kind==='conclusion'||kind==='report'){
-    node('div',lines[kind==='conclusion'?1:0]||'',head).className='reference-recipient';
+    node('div',keepRecipientNameTogether(lines[kind==='conclusion'?1:0]||''),head).className='reference-recipient';
   }else if(kind==='notice'){
     const columns=node('div','',head);columns.className='reference-columns';
     node('div','ФЕДЕРАЛЬНАЯ\nСЛУЖБА БЕЗОПАСНОСТИ\n(ФСБ РО)\n\n'+val('#department').trim().toLocaleUpperCase('ru-RU')+(documentCode?'\n№ '+documentCode:''),columns);
@@ -245,7 +248,7 @@ async function prepareReferenceDownload(generation){
       ctx.font=font(size,bold);ctx.fillStyle='#111';ctx.textAlign=align;ctx.fillText(text,x,y);ctx.textAlign='left';
     }
     function wrap(text,x,y,width,size=26,indent=0,bold=false){
-      ctx.font=font(size,bold);const words=text.split(/\s+/).filter(Boolean),lines=[];let line='',first=true;
+      ctx.font=font(size,bold);const words=text.split(/[ \t\r\n]+/).filter(Boolean),lines=[];let line='',first=true;
       for(const word of words){const trial=line?line+' '+word:word;if(line&&ctx.measureText(trial).width>width-(first?indent:0)){lines.push(line);line=word;first=false}else line=trial}
       if(line)lines.push(line);
       for(let i=0;i<lines.length;i++){
