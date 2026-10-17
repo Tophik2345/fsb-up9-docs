@@ -25,6 +25,7 @@ function update() {
   const documentCode=val('#code').trim().replace(/^№\s*/,'');
   const kind=template.startsWith('Постановление')?'decree':template.startsWith('Заключение')?'conclusion':template.startsWith('Уведомление')?'notice':template.startsWith('Рапорт')?'report':'custom';
   $('.paper').dataset.kind=kind;
+  $('#departmentField').hidden=kind!=='notice';
   const stampEl=$('.stamp img'),stampChoice=val('#stampChoice');
   stampEl.hidden=!stampChoice;
   stampEl.parentElement.hidden=!stampChoice;
@@ -40,7 +41,7 @@ function update() {
     node('div',lines[kind==='conclusion'?1:0]||'',head).className='reference-recipient';
   }else if(kind==='notice'){
     const columns=node('div','',head);columns.className='reference-columns';
-    node('div','ФЕДЕРАЛЬНАЯ\nСЛУЖБА БЕЗОПАСНОСТИ\n(ФСБ РО)\n\nУПРАВЛЕНИЕ «М»'+(documentCode?'\n№ '+documentCode:''),columns);
+    node('div','ФЕДЕРАЛЬНАЯ\nСЛУЖБА БЕЗОПАСНОСТИ\n(ФСБ РО)\n\n'+val('#department').trim().toLocaleUpperCase('ru-RU')+(documentCode?'\n№ '+documentCode:''),columns);
     node('div',lines[0]||'',columns);
   }
   const dates=$('#referenceDate');dates.hidden=kind==='custom'||kind==='notice'||kind==='report';
