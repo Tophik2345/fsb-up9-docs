@@ -19,6 +19,53 @@ function safeHtml(root) {
   return output.innerHTML;
 }
 function countWords(node) { return (node.innerText.trim().match(/\S+/g) || []).length; }
+function richBlocks(root) {
+  const blocks=[];let runs=[];
+  const flush=()=>{const text=runs.map(run=>run.text).join('').trim();if(text)blocks.push({text,runs});runs=[]};
+  function walk(node,bold=false,italic=false){
+    if(node.nodeType===Node.TEXT_NODE){runs.push({text:node.textContent,bold,italic});return}
+    if(node.nodeType!==Node.ELEMENT_NODE)return;
+    if(node.tagName==='BR'){flush();return}
+    const block=/^(P|DIV|LI|UL|OL)$/.test(node.tagName);
+    if(block)flush();
+    for(const child of node.childNodes)walk(child,bold||/^(B|STRONG)$/.test(node.tagName),italic||/^(I|EM)$/.test(node.tagName));
+    if(block)flush();
+  }
+  for(const child of root.childNodes)walk(child);flush();return blocks;
+}
+function richDecisionBlocks(root) {
+  const items=[...root.querySelectorAll('li')];
+  return items.length?items.map(item=>{
+    const blocks=richBlocks(item),runs=[];
+    blocks.forEach((block,index)=>{if(index)runs.push({text:' ',bold:false,italic:false});runs.push(...block.runs)});
+    return {text:runs.map(run=>run.text).join('').trim(),runs};
+  }).filter(block=>block.text):richBlocks(root);
+}
+function wrapRichText(ctx,runs,x,y,width,size=26,indent=0,align='justify') {
+  const font=run=>`${run.italic?'italic ':''}${run.bold?'bold ':''}${size}px "Times New Roman", serif`;
+  const words=[];let word=[];
+  const flush=()=>{if(word.length)words.push(word);word=[]};
+  for(const run of runs)for(const token of run.text.match(/[ \t\r\n]+|[^ \t\r\n]+/g)||[]){
+    if(/^[ \t\r\n]+$/.test(token))flush();else word.push({...run,text:token});
+  }
+  flush();
+  const measure=parts=>parts.reduce((total,part)=>{ctx.font=font(part);return total+ctx.measureText(part.text).width},0);
+  ctx.font=font({});const space=ctx.measureText(' ').width;
+  const lines=[];let line=[],used=0;
+  for(const parts of words){const w=measure(parts),available=width-(lines.length?0:indent);
+    if(line.length&&used+space+w>available){lines.push(line);line=[];used=0}
+    if(line.length)used+=space;line.push({parts,width:w});used+=w;
+  }
+  if(line.length)lines.push(line);
+  lines.forEach((current,index)=>{
+    const left=x+(index===0?indent:0),available=width-(index===0?indent:0),total=current.reduce((n,w)=>n+w.width,0);
+    const gap=align==='justify'&&index<lines.length-1&&current.length>1?(available-total)/(current.length-1):space;
+    let px=left;ctx.fillStyle='#111';ctx.textAlign='left';
+    for(const item of current){for(const part of item.parts){ctx.font=font(part);ctx.fillText(part.text,px,y);px+=ctx.measureText(part.text).width}px+=gap}
+    y+=size*1.43;
+  });
+  return y+size*.55;
+}
 function editorLines(root) {
   const copy=root.cloneNode(true);
   copy.querySelectorAll('br').forEach(node=>node.replaceWith('\n'));
@@ -90,6 +137,22 @@ function update() {
   scheduleDownload();
 }
 document.querySelectorAll('input:not(#code),select,[contenteditable]').forEach(el => el.addEventListener('input',update));
+const formattingRanges=new Map();
+function rememberFormattingRange(){
+  const selection=window.getSelection();if(!selection?.rangeCount)return;
+  const range=selection.getRangeAt(0);
+  for(const id of ['intro','decision']){const editor=$('#'+id);if(editor.contains(range.startContainer)&&editor.contains(range.endContainer))formattingRanges.set(id,range.cloneRange())}
+}
+document.addEventListener('selectionchange',rememberFormattingRange);
+document.querySelectorAll('[data-bold-editor]').forEach(button=>{
+  button.addEventListener('pointerdown',event=>{rememberFormattingRange();event.preventDefault()});
+  button.addEventListener('click',()=>{
+    const id=button.dataset.boldEditor,editor=$('#'+id),range=formattingRanges.get(id),selection=window.getSelection();
+    if(!range||range.collapsed||!editor.contains(range.startContainer)||!editor.contains(range.endContainer))return;
+    editor.focus();selection.removeAllRanges();selection.addRange(range);
+    document.execCommand('styleWithCSS',false,false);document.execCommand('bold',false,null);rememberFormattingRange();update();
+  });
+});
 let codeUpdateTimer;
 $('#code').addEventListener('input',()=>{
   clearTimeout(codeUpdateTimer);
@@ -150,6 +213,7 @@ $('#logout').onclick=async()=>{if(authToken)await api('logout',{method:'POST'});
 document.querySelectorAll('[contenteditable]').forEach(el=>el.addEventListener('paste',e=>{e.preventDefault();document.execCommand('insertText',false,e.clipboardData.getData('text/plain'))}));
 $('#template').addEventListener('change',()=>{
   const doc=templates[$('#template').value]; if(!doc) return;
+  formattingRanges.clear();
   for(const button of $('#sideTemplates').children)button.classList.toggle('active',button.lastElementChild?.textContent===doc.name);
   for(const key of ['title','code','date','author','position']) $('#'+key).value=doc[key];
   $('#signatureText').value=doc.signature||'';
@@ -187,23 +251,22 @@ async function prepareDownload(generation){
       for(let i=0;i<lines.length;i++){line(lines[i],x+(i===0?indent:0),y,size,bold);y+=size*1.44}
       return lines.length;
     }
-    function paragraph(text,bold=false){
-      if(!text.trim())return;
-      if(/^УСТАНОВИЛ\s*:?\s*$/i.test(text.trim())){centerCaption(text);return}
-      wrapped(text,margin,right-margin,25,bold);y+=18
+    function paragraph(block){
+      if(/^УСТАНОВИЛ\s*:?\s*$/i.test(block.text)){centerCaption(block.text);return}
+      y=wrapRichText(ctx,block.runs,margin,y,right-margin,25);y+=18;
     }
     function centerCaption(text){
       ctx.font=font(25,true);line(text.trim(),(width-ctx.measureText(text.trim()).width)/2,y,25,true);y+=25*1.44+18;
     }
     function imageLoaded(src){return new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=src})}
     const emblem=await imageLoaded(document.querySelector('.seal-emblem').src);
-    const paragraphs=[...$('#pintro').children].map(p=>({text:p.innerText,bold:p.querySelector('b,strong')!==null&&p.innerText.trim()===p.querySelector('b,strong')?.innerText.trim()}));
+    const paragraphs=richBlocks($('#pintro'));
     // First measure content at the same font and width used for the final image.
     y=735;
-    for(const p of paragraphs)paragraph(p.text,p.bold);
+    for(const p of paragraphs)paragraph(p);
     if(!$('#decisionCaption').hidden){y+=12;centerCaption($('#decisionCaption').textContent)}
-    const items=decisionLines($('#ppoints')),numbered=!!$('#ppoints li');
-    for(let i=0;i<items.length;i++){wrapped((numbered?(i+1)+'. ':'')+items[i],margin+22,right-margin-22,25);y+=9}
+    const items=richDecisionBlocks($('#ppoints')),numbered=!!$('#ppoints li');
+    for(let i=0;i<items.length;i++){y=wrapRichText(ctx,[{text:numbered?(i+1)+'. ':'',bold:false},...items[i].runs],margin+22,y,right-margin-22,25);y+=9}
     const footerY=Math.max(1640,y+55),height=footerY+240;
     canvas.width=width;canvas.height=height;
     ctx.fillStyle='#e6e6e5';ctx.fillRect(0,0,width,height);
@@ -220,9 +283,9 @@ async function prepareDownload(generation){
     for(const char of docType){line(char,x,500,52,true);x+=ctx.measureText(char).width+spacing}
     ctx.font=font(29);line($('#ptitle').textContent,(width-ctx.measureText($('#ptitle').textContent).width)/2,555,29);
     y=735;
-    for(const p of paragraphs)paragraph(p.text,p.bold);
+    for(const p of paragraphs)paragraph(p);
     if(!$('#decisionCaption').hidden){y+=12;centerCaption($('#decisionCaption').textContent)}
-    for(let i=0;i<items.length;i++){wrapped((numbered?(i+1)+'. ':'')+items[i],margin+22,right-margin-22,25);y+=9}
+    for(let i=0;i<items.length;i++){y=wrapRichText(ctx,[{text:numbered?(i+1)+'. ':'',bold:false},...items[i].runs],margin+22,y,right-margin-22,25);y+=9}
     ctx.strokeStyle='#aaa';ctx.beginPath();ctx.moveTo(margin,footerY);ctx.lineTo(right,footerY);ctx.stroke();
     line($('#pposition').textContent,margin,footerY+38,21);
     if($('#stampChoice').value){const seal=await imageLoaded($('.stamp img').src);ctx.drawImage(seal,margin,footerY+65,125,125)}
@@ -245,8 +308,8 @@ async function prepareReferenceDownload(generation){
   try{
     const canvas=document.createElement('canvas');canvas.width=1240;canvas.height=3000;
     const ctx=canvas.getContext('2d'),center=620;
-    const paragraphs=[...$('#pintro').children].map(p=>p.innerText.trim()).filter(Boolean);
-    const points=decisionLines($('#ppoints')),numbered=!!$('#ppoints li');
+    const paragraphs=richBlocks($('#pintro'));
+    const points=richDecisionBlocks($('#ppoints')),numbered=!!$('#ppoints li');
     const loadImage=src=>new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=src});
     const stampEl=$('.stamp img'),stamp=$('#stampChoice').value?await loadImage(stampEl.src):null;
     const crest=await loadImage(crestSrc);
@@ -299,11 +362,11 @@ async function prepareReferenceDownload(generation){
         y=wrap(subtitle,x,titleY+42,width,25,0,true,'center')+35;
       }
       for(const paragraph of paragraphs){
-        if(/^УСТАНОВИЛ\s*:?\s*$/i.test(paragraph)){y+=6;write(paragraph,center,y,27,true,'center');y+=52;continue}
-        y=wrap(paragraph,x,y,width,26,66)+7;
+        if(/^УСТАНОВИЛ\s*:?\s*$/i.test(paragraph.text)){y+=6;write(paragraph.text,center,y,27,true,'center');y+=52;continue}
+        y=wrapRichText(ctx,paragraph.runs,x,y,width,26,66)+7;
       }
       if(kind==='decree'&&points.length){y+=9;write('ПОСТАНОВИЛ:',center,y,27,true,'center');y+=58}
-      points.forEach((point,i)=>{if(numbered)write((i+1)+'.',x+25,y,25);y=wrap(point,numbered?x+75:x,y,numbered?width-75:width,26)+18});
+      points.forEach((point,i)=>{if(numbered)write((i+1)+'.',x+25,y,25);y=wrapRichText(ctx,point.runs,numbered?x+75:x,y,numbered?width-75:width,26)+18});
       const footerY=Math.max(kind==='decree'?1490:kind==='report'?1195:kind==='notice'?1330:1400,y+65);
       const position=$('#pposition').textContent;
       let py=footerY+15;for(const part of positionLines(position)){py=wrap(part,x,py,width*.48,25,0,false,'left')}
